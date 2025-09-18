@@ -230,26 +230,3 @@ jobs:
         tag: ${{ github.ref }}
         revision: ${{ github.sha }}
 
-  notify:
-    name: Notify Release
-    needs: [create-release, build-and-upload, publish-crate, build-docker]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-    - name: Notify Slack
-      if: success() && secrets.SLACK_WEBHOOK_URL != ''
-      uses: 8398a7/action-slack@v3
-      with:
-        status: success
-        text: "🎉 K8sify v${{ needs.create-release.outputs.version }} has been released!"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-    - name: Notify Slack on Failure
-      if: failure() && secrets.SLACK_WEBHOOK_URL != ''
-      uses: 8398a7/action-slack@v3
-      with:
-        status: failure
-        text: "❌ K8sify v${{ needs.create-release.outputs.version }} release failed!"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
