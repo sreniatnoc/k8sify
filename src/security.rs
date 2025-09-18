@@ -436,7 +436,7 @@ impl SecurityScanner {
             }
 
             // Check for writable mounts
-            if !volume.read_only && volume.target.starts_with('/etc') {
+            if !volume.read_only && volume.target.starts_with("/etc") {
                 findings.push(SecurityFinding {
                     id: format!("VOL-003-{}-{}", service.name, volume.target.replace('/', "-")),
                     title: "Writable mount to sensitive directory".to_string(),
