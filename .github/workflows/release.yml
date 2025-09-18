@@ -13,7 +13,6 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.VERSION }}
     steps:
     - name: Get version from tag
@@ -22,12 +21,11 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ github.ref }}
-        release_name: K8sify v${{ steps.get_version.outputs.VERSION }}
+        name: K8sify v${{ steps.get_version.outputs.VERSION }}
         body: |
           ## What's Changed
 
@@ -128,15 +126,15 @@ jobs:
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
       run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
+    - name: Rename binary for release
+      run: cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+
     - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
-        asset_content_type: application/octet-stream
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ github.ref }}
+        files: ${{ matrix.asset_name }}
 
   publish-crate:
     name: Publish to crates.io
@@ -239,7 +237,7 @@ jobs:
     if: always()
     steps:
     - name: Notify Slack
-      if: success()
+      if: success() && secrets.SLACK_WEBHOOK_URL != ''
       uses: 8398a7/action-slack@v3
       with:
         status: success
@@ -248,7 +246,7 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
     - name: Notify Slack on Failure
-      if: failure()
+      if: failure() && secrets.SLACK_WEBHOOK_URL != ''
       uses: 8398a7/action-slack@v3
       with:
         status: failure
