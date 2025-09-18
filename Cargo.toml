@@ -43,9 +43,6 @@ tempfile = "3.8"
 assert_cmd = "2.0"
 predicates = "3.0"
 
-[[bench]]
-name = "benchmark"
-harness = false
 
 [profile.release]
 opt-level = 3

@@ -99,13 +99,13 @@ struct SecurityPatterns {
 impl SecurityScanner {
     pub fn new() -> Self {
         let secret_patterns = vec![
-            (Regex::new(r"(?i)password\s*=\s*['\"]([^'\"]{8,})['\"]").unwrap(), "Password in plaintext".to_string()),
-            (Regex::new(r"(?i)api[_-]?key\s*=\s*['\"]([A-Za-z0-9]{20,})['\"]").unwrap(), "API key in plaintext".to_string()),
-            (Regex::new(r"(?i)secret[_-]?key\s*=\s*['\"]([A-Za-z0-9]{20,})['\"]").unwrap(), "Secret key in plaintext".to_string()),
-            (Regex::new(r"(?i)token\s*=\s*['\"]([A-Za-z0-9]{20,})['\"]").unwrap(), "Token in plaintext".to_string()),
+            (Regex::new(r#"(?i)password\s*=\s*['"]([^'"]{8,})['"]"#).unwrap(), "Password in plaintext".to_string()),
+            (Regex::new(r#"(?i)api[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "API key in plaintext".to_string()),
+            (Regex::new(r#"(?i)secret[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "Secret key in plaintext".to_string()),
+            (Regex::new(r#"(?i)token\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "Token in plaintext".to_string()),
             (Regex::new(r"(?i)private[_-]?key").unwrap(), "Private key reference".to_string()),
-            (Regex::new(r"(?i)aws[_-]?access[_-]?key[_-]?id\s*=\s*['\"]([A-Z0-9]{20})['\"]").unwrap(), "AWS Access Key".to_string()),
-            (Regex::new(r"(?i)aws[_-]?secret[_-]?access[_-]?key\s*=\s*['\"]([A-Za-z0-9/+=]{40})['\"]").unwrap(), "AWS Secret Key".to_string()),
+            (Regex::new(r#"(?i)aws[_-]?access[_-]?key[_-]?id\s*=\s*['"]([A-Z0-9]{20})['"]"#).unwrap(), "AWS Access Key".to_string()),
+            (Regex::new(r#"(?i)aws[_-]?secret[_-]?access[_-]?key\s*=\s*['"]([A-Za-z0-9/+=]{40})['"]"#).unwrap(), "AWS Secret Key".to_string()),
         ];
 
         let insecure_protocols = vec![
