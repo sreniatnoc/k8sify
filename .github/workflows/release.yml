@@ -31,13 +31,13 @@ jobs:
         body: |
           ## What's Changed
 
-          Please see the [CHANGELOG.md](https://github.com/k8sify/k8sify/blob/main/CHANGELOG.md) for detailed changes.
+          Please see the [CHANGELOG.md](https://github.com/sreniatnoc/k8sify/blob/main/CHANGELOG.md) for detailed changes.
 
           ## Installation
 
           ### Homebrew (macOS/Linux)
           ```bash
-          brew install k8sify/tap/k8sify
+          brew install sreniatnoc/tap/k8sify
           ```
 
           ### Download Binary
@@ -199,7 +199,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: |
-          k8sify/k8sify
+          sreniatnoc/k8sify
           ghcr.io/${{ github.repository }}
         tags: |
           type=ref,event=tag
@@ -227,6 +227,7 @@ jobs:
       uses: dawidd6/action-homebrew-bump-formula@v3
       with:
         token: ${{ secrets.HOMEBREW_TOKEN }}
+        tap: sreniatnoc/homebrew-tap
         formula: k8sify
         tag: ${{ github.ref }}
         revision: ${{ github.sha }}

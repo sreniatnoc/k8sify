@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["K8sify Contributors"]
 description = "Intelligent Docker Compose to Kubernetes migration tool with cost analysis, security scanning, and production patterns"
 license = "MIT"
-repository = "https://github.com/k8sify/k8sify"
+repository = "https://github.com/sreniatnoc/k8sify"
 keywords = ["kubernetes", "docker-compose", "migration", "devops", "container"]
 categories = ["command-line-utilities", "development-tools"]
 

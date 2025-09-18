@@ -6,7 +6,7 @@ K8sify is a powerful CLI tool that analyzes your Docker Compose applications and
 
 [![CI](https://github.com/sreniatnoc/k8sify/workflows/CI/badge.svg)](https://github.com/sreniatnoc/k8sify/actions)
 [![Crates.io](https://img.shields.io/crates/v/k8sify.svg)](https://crates.io/crates/k8sify)
-[![Docker](https://img.shields.io/docker/v/k8sify/k8sify?label=docker)](https://hub.docker.com/r/k8sify/k8sify)
+[![Docker](https://img.shields.io/docker/v/sreniatnoc/k8sify?label=docker)](https://hub.docker.com/r/sreniatnoc/k8sify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Features
@@ -60,7 +60,7 @@ cargo install k8sify
 
 #### Docker
 ```bash
-docker run --rm -v $(pwd):/workspace k8sify/k8sify convert -i docker-compose.yml
+docker run --rm -v $(pwd):/workspace sreniatnoc/k8sify convert -i docker-compose.yml
 ```
 
 #### Download Binary
@@ -484,7 +484,7 @@ stages:
 
 convert:
   stage: convert
-  image: k8sify/k8sify:latest
+  image: sreniatnoc/k8sify:latest
   script:
     - k8sify convert -i docker-compose.yml -o ./k8s --production --yes
     - k8sify security -i docker-compose.yml
@@ -494,7 +494,7 @@ convert:
 
 validate:
   stage: validate
-  image: k8sify/k8sify:latest
+  image: sreniatnoc/k8sify:latest
   script:
     - k8sify validate -i ./k8s --strict
 
