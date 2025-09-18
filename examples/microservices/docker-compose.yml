@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # Load Balancer / API Gateway
+  gateway:
+    image: nginx:1.20
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - UPSTREAM_USER_SERVICE=user-service:3001
+      - UPSTREAM_ORDER_SERVICE=order-service:3002
+      - UPSTREAM_PAYMENT_SERVICE=payment-service:3003
+    depends_on:
+      - user-service
+      - order-service
+      - payment-service
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # User Management Service
+  user-service:
+    image: user-service:1.0
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://user:password@postgres:5432/users
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-jwt-secret
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Order Management Service
+  order-service:
+    image: order-service:1.0
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - DATABASE_URL=postgresql://user:password@postgres:5432/orders
+      - MESSAGE_QUEUE_URL=amqp://user:password@rabbitmq:5672
+      - USER_SERVICE_URL=http://user-service:3001
+      - PAYMENT_SERVICE_URL=http://payment-service:3003
+    depends_on:
+      - postgres
+      - rabbitmq
+      - user-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Payment Processing Service
+  payment-service:
+    image: payment-service:1.0
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - DATABASE_URL=postgresql://user:password@postgres:5432/payments
+      - MESSAGE_QUEUE_URL=amqp://user:password@rabbitmq:5672
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_key
+      - ENCRYPTION_KEY=your-encryption-key
+    depends_on:
+      - postgres
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Background Workers
+  order-worker:
+    image: order-service:1.0
+    command: ["npm", "run", "worker"]
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://user:password@postgres:5432/orders
+      - MESSAGE_QUEUE_URL=amqp://user:password@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+  notification-worker:
+    image: notification-service:1.0
+    command: ["npm", "run", "worker"]
+    environment:
+      - NODE_ENV=production
+      - MESSAGE_QUEUE_URL=amqp://user:password@rabbitmq:5672
+      - EMAIL_SERVICE_URL=https://api.sendgrid.com
+      - SMS_SERVICE_URL=https://api.twilio.com
+    depends_on:
+      - rabbitmq
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+  # Database
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=microservices
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_MULTIPLE_DATABASES=users,orders,payments
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d microservices"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  # Cache
+  redis:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    driver: bridge
+  monitoring:
+    driver: bridge
