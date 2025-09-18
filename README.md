@@ -4,7 +4,7 @@
 
 K8sify is a powerful CLI tool that analyzes your Docker Compose applications and generates production-ready Kubernetes manifests with intelligent pattern detection, cost estimation, security scanning, and best practices built-in.
 
-[![CI](https://github.com/k8sify/k8sify/workflows/CI/badge.svg)](https://github.com/k8sify/k8sify/actions)
+[![CI](https://github.com/sreniatnoc/k8sify/workflows/CI/badge.svg)](https://github.com/sreniatnoc/k8sify/actions)
 [![Crates.io](https://img.shields.io/crates/v/k8sify.svg)](https://crates.io/crates/k8sify)
 [![Docker](https://img.shields.io/docker/v/k8sify/k8sify?label=docker)](https://hub.docker.com/r/k8sify/k8sify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -50,7 +50,7 @@ K8sify is a powerful CLI tool that analyzes your Docker Compose applications and
 
 #### Homebrew (macOS/Linux)
 ```bash
-brew install k8sify/tap/k8sify
+brew install sreniatnoc/tap/k8sify
 ```
 
 #### Cargo (Rust)
@@ -64,7 +64,7 @@ docker run --rm -v $(pwd):/workspace k8sify/k8sify convert -i docker-compose.yml
 ```
 
 #### Download Binary
-Download the latest release from [GitHub Releases](https://github.com/k8sify/k8sify/releases).
+Download the latest release from [GitHub Releases](https://github.com/sreniatnoc/k8sify/releases).
 
 ### Basic Usage
 
@@ -458,7 +458,7 @@ jobs:
 
     - name: Install K8sify
       run: |
-        curl -sSL https://github.com/k8sify/k8sify/releases/latest/download/k8sify-linux-amd64 -o k8sify
+        curl -sSL https://github.com/sreniatnoc/k8sify/releases/latest/download/k8sify-linux-amd64 -o k8sify
         chmod +x k8sify
         sudo mv k8sify /usr/local/bin/
 
@@ -529,7 +529,7 @@ k8sify helm-values -i ./k8s -o values.yaml
 
 ### **Building from Source**
 ```bash
-git clone https://github.com/k8sify/k8sify.git
+git clone https://github.com/sreniatnoc/k8sify.git
 cd k8sify
 cargo build --release
 ```
@@ -579,7 +579,7 @@ cargo watch -x test
 ## 🤝 Community
 
 - [Discord](https://discord.gg/k8sify) - Community chat
-- [GitHub Discussions](https://github.com/k8sify/k8sify/discussions) - Q&A and ideas
+- [GitHub Discussions](https://github.com/sreniatnoc/k8sify/discussions) - Q&A and ideas
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/k8sify) - Technical questions
 - [Twitter](https://twitter.com/k8sify) - Updates and announcements
 
@@ -651,9 +651,9 @@ ls -la docker-compose.yml
 ### **Getting Help**
 
 1. Check the [FAQ](docs/faq.md)
-2. Search [existing issues](https://github.com/k8sify/k8sify/issues)
+2. Search [existing issues](https://github.com/sreniatnoc/k8sify/issues)
 3. Join our [Discord community](https://discord.gg/k8sify)
-4. Create a [new issue](https://github.com/k8sify/k8sify/issues/new)
+4. Create a [new issue](https://github.com/sreniatnoc/k8sify/issues/new)
 
 ## 📄 License
 
@@ -664,7 +664,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Docker Compose](https://docs.docker.com/compose/) - Container orchestration inspiration
 - [Kubernetes](https://kubernetes.io/) - Container orchestration platform
 - [Rust Community](https://www.rust-lang.org/community) - Amazing ecosystem and tools
-- [Contributors](https://github.com/k8sify/k8sify/graphs/contributors) - Everyone who helps make K8sify better
+- [Contributors](https://github.com/sreniatnoc/k8sify/graphs/contributors) - Everyone who helps make K8sify better
 
 ---
 
