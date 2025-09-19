@@ -210,8 +210,17 @@ impl ManifestValidator {
             .await
             .context("Failed to read file")?;
 
-        let documents: Vec<Value> =
-            serde_yaml::from_str(&content).context("Failed to parse YAML")?;
+        // Parse YAML - handle both single documents and multi-document YAML
+        let documents: Vec<Value> = if content.trim().contains("---") {
+            serde_yaml::Deserializer::from_str(&content)
+                .map(|de| Value::deserialize(de))
+                .collect::<Result<Vec<_>, _>>()
+                .context("Failed to parse multi-document YAML")?
+        } else {
+            // Single document
+            let doc: Value = serde_yaml::from_str(&content).context("Failed to parse YAML")?;
+            vec![doc]
+        };
 
         let mut all_errors = Vec::new();
         let mut all_warnings = Vec::new();

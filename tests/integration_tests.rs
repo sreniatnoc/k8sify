@@ -58,7 +58,7 @@ volumes:
     let manifests = converter.convert_basic(&analysis).await?;
 
     assert_eq!(manifests.deployments.len(), 2);
-    assert_eq!(manifests.services.len(), 2);
+    assert_eq!(manifests.services.len(), 1); // Only web service has ports
 
     // Test security scanner
     let security_scanner = SecurityScanner::new();
@@ -398,7 +398,7 @@ networks:
 
     // Should generate comprehensive manifests
     assert_eq!(manifests.deployments.len(), 5);
-    assert_eq!(manifests.services.len(), 4); // All except worker
+    assert_eq!(manifests.services.len(), 3); // frontend, backend, redis (db and worker have no ports)
     assert_eq!(manifests.persistent_volume_claims.len(), 2);
 
     Ok(())
