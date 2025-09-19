@@ -99,8 +99,8 @@ pub struct CostEstimator {
 
 #[derive(Debug, Clone)]
 pub enum CloudProvider {
-    AWS,
-    GCP,
+    Aws,
+    Gcp,
     Azure,
     DigitalOcean,
     OnPremise,
@@ -119,8 +119,8 @@ pub struct PricingData {
 impl CostEstimator {
     pub fn new(provider: &str, region: &str) -> Self {
         let cloud_provider = match provider.to_lowercase().as_str() {
-            "aws" => CloudProvider::AWS,
-            "gcp" | "google" => CloudProvider::GCP,
+            "aws" => CloudProvider::Aws,
+            "gcp" | "google" => CloudProvider::Gcp,
             "azure" | "microsoft" => CloudProvider::Azure,
             "digitalocean" | "do" => CloudProvider::DigitalOcean,
             _ => CloudProvider::OnPremise,
@@ -137,8 +137,8 @@ impl CostEstimator {
 
     fn get_pricing_data(provider: &CloudProvider, region: &str) -> PricingData {
         match provider {
-            CloudProvider::AWS => Self::get_aws_pricing(region),
-            CloudProvider::GCP => Self::get_gcp_pricing(region),
+            CloudProvider::Aws => Self::get_aws_pricing(region),
+            CloudProvider::Gcp => Self::get_gcp_pricing(region),
             CloudProvider::Azure => Self::get_azure_pricing(region),
             CloudProvider::DigitalOcean => Self::get_digitalocean_pricing(region),
             CloudProvider::OnPremise => Self::get_onpremise_pricing(),
@@ -420,7 +420,7 @@ impl CostEstimator {
         let data_transfer = estimated_data_transfer_gb * self.pricing_data.data_transfer_per_gb;
 
         let load_balancer = self.pricing_data.load_balancer_per_hour * 24.0 * 30.0;
-        let nat_gateway = if matches!(self.provider, CloudProvider::AWS) {
+        let nat_gateway = if matches!(self.provider, CloudProvider::Aws) {
             45.0
         } else {
             0.0
@@ -490,7 +490,7 @@ impl CostEstimator {
         // Spot instances recommendation
         if matches!(
             self.provider,
-            CloudProvider::AWS | CloudProvider::GCP | CloudProvider::Azure
+            CloudProvider::Aws | CloudProvider::Gcp | CloudProvider::Azure
         ) {
             recommendations.push(CostRecommendation {
                 recommendation_type: RecommendationType::SpotInstances,

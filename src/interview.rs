@@ -65,8 +65,8 @@ pub enum SecurityLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CloudProvider {
-    AWS,
-    GCP,
+    Aws,
+    Gcp,
     Azure,
     DigitalOcean,
     OnPremise,
@@ -275,11 +275,11 @@ impl InteractiveWizard {
                 .interact()?;
 
             config.cloud_provider = match provider_selection {
-                0 => CloudProvider::AWS,
-                1 => CloudProvider::GCP,
+                0 => CloudProvider::Aws,
+                1 => CloudProvider::Gcp,
                 2 => CloudProvider::Azure,
                 3 => CloudProvider::DigitalOcean,
-                _ => CloudProvider::AWS,
+                _ => CloudProvider::Aws,
             };
         }
 
@@ -494,8 +494,8 @@ impl InteractiveWizard {
         progress.enable_steady_tick(Duration::from_millis(100));
 
         let provider = match config.cloud_provider {
-            CloudProvider::AWS => "aws",
-            CloudProvider::GCP => "gcp",
+            CloudProvider::Aws => "aws",
+            CloudProvider::Gcp => "gcp",
             CloudProvider::Azure => "azure",
             CloudProvider::DigitalOcean => "digitalocean",
             CloudProvider::OnPremise => "on-premise",

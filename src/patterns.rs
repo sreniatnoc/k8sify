@@ -27,6 +27,7 @@ pub enum PatternType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(clippy::enum_variant_names)]
 pub enum ProductionPattern {
     WebAppPattern(WebAppPattern),
     DatabasePattern(DatabasePattern),

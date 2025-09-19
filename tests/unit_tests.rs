@@ -36,7 +36,7 @@ fn test_service_type_detection() {
 
 #[test]
 fn test_scaling_hints() {
-    let pattern_detector = PatternDetector::new();
+    let _pattern_detector = PatternDetector::new();
 
     // Test stateful service - TODO: implement analyze_scaling_hints method
     // let scaling_hints = pattern_detector.analyze_scaling_hints(
@@ -204,7 +204,7 @@ fn test_complexity_score_calculation() {
         vec![],
         ServiceType::WebApp,
     )];
-    let simple_score = analyzer.calculate_complexity_score(&simple_services, &vec![], &vec![]);
+    let simple_score = analyzer.calculate_complexity_score(&simple_services, &[], &[]);
     assert!(simple_score < 20);
 
     // Complex application
@@ -214,7 +214,7 @@ fn test_complexity_score_calculation() {
         create_test_service("postgres:13", vec![5432], vec![], ServiceType::Database),
         create_test_service("redis:6", vec![6379], vec![], ServiceType::Cache),
     ];
-    let complex_score = analyzer.calculate_complexity_score(&complex_services, &vec![], &vec![]);
+    let complex_score = analyzer.calculate_complexity_score(&complex_services, &[], &[]);
     assert!(complex_score > 40);
 }
 
@@ -348,6 +348,7 @@ fn create_test_service_with_env(
     }
 }
 
+#[allow(dead_code)]
 fn create_test_volume(target: &str) -> k8sify::analyzer::VolumeMount {
     use k8sify::analyzer::{VolumeMount, VolumeMountType};
 

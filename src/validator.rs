@@ -520,7 +520,7 @@ impl ManifestValidator {
 // Resource-specific validators
 impl ResourceValidator for DeploymentValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
-        let mut errors = Vec::new();
+        let errors = Vec::new();
         let mut warnings = Vec::new();
 
         if let Some(spec) = resource.get("spec") {
@@ -626,7 +626,7 @@ impl ResourceValidator for ServiceValidator {
 
 impl ResourceValidator for ConfigMapValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
-        let mut errors = Vec::new();
+        let errors = Vec::new();
         let mut warnings = Vec::new();
 
         // Check if data exists
@@ -645,7 +645,7 @@ impl ResourceValidator for ConfigMapValidator {
 
 impl ResourceValidator for SecretValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
-        let mut errors = Vec::new();
+        let errors = Vec::new();
         let mut warnings = Vec::new();
 
         // Check if data exists
@@ -665,7 +665,7 @@ impl ResourceValidator for SecretValidator {
 impl ResourceValidator for PvcValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
         let mut errors = Vec::new();
-        let mut warnings = Vec::new();
+        let warnings = Vec::new();
 
         if let Some(spec) = resource.get("spec") {
             // Check access modes
@@ -695,7 +695,7 @@ impl ResourceValidator for PvcValidator {
 
 impl ResourceValidator for IngressValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
-        let mut errors = Vec::new();
+        let errors = Vec::new();
         let mut warnings = Vec::new();
 
         if let Some(spec) = resource.get("spec") {
@@ -717,7 +717,7 @@ impl ResourceValidator for IngressValidator {
 impl ResourceValidator for HpaValidator {
     fn validate(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
         let mut errors = Vec::new();
-        let mut warnings = Vec::new();
+        let warnings = Vec::new();
 
         if let Some(spec) = resource.get("spec") {
             // Check scale target ref
