@@ -175,8 +175,8 @@ impl DockerComposeAnalyzer {
             .await
             .context("Failed to read docker-compose file")?;
 
-        let compose: Value = serde_yaml::from_str(&content)
-            .context("Failed to parse docker-compose file")?;
+        let compose: Value =
+            serde_yaml::from_str(&content).context("Failed to parse docker-compose file")?;
 
         let version = compose
             .get("version")
@@ -264,15 +264,24 @@ impl DockerComposeAnalyzer {
             }
         }
 
-        if ports.iter().any(|p| p.container_port == 80 || p.container_port == 443 || p.container_port == 8080) {
+        if ports
+            .iter()
+            .any(|p| p.container_port == 80 || p.container_port == 443 || p.container_port == 8080)
+        {
             return ServiceType::WebApp;
         }
 
-        if environment.keys().any(|k| k.contains("DATABASE") || k.contains("DB_")) {
+        if environment
+            .keys()
+            .any(|k| k.contains("DATABASE") || k.contains("DB_"))
+        {
             return ServiceType::Database;
         }
 
-        if environment.keys().any(|k| k.contains("REDIS") || k.contains("CACHE")) {
+        if environment
+            .keys()
+            .any(|k| k.contains("REDIS") || k.contains("CACHE"))
+        {
             return ServiceType::Cache;
         }
 
@@ -285,17 +294,19 @@ impl DockerComposeAnalyzer {
         volumes: &[VolumeMount],
         environment: &HashMap<String, String>,
     ) -> ScalingHints {
-        let stateful = matches!(service_type, ServiceType::Database | ServiceType::Storage) ||
-            volumes.iter().any(|v| matches!(v.mount_type, VolumeMountType::Volume));
+        let stateful = matches!(service_type, ServiceType::Database | ServiceType::Storage)
+            || volumes
+                .iter()
+                .any(|v| matches!(v.mount_type, VolumeMountType::Volume));
 
-        let horizontal_scaling = !stateful &&
-            !matches!(service_type, ServiceType::Database | ServiceType::Storage);
+        let horizontal_scaling =
+            !stateful && !matches!(service_type, ServiceType::Database | ServiceType::Storage);
 
         let vertical_scaling = matches!(service_type, ServiceType::Database | ServiceType::Cache);
 
-        let session_affinity = environment.contains_key("SESSION_STORE") ||
-            environment.contains_key("SESSION_SECRET") ||
-            matches!(service_type, ServiceType::Database);
+        let session_affinity = environment.contains_key("SESSION_STORE")
+            || environment.contains_key("SESSION_SECRET")
+            || matches!(service_type, ServiceType::Database);
 
         ScalingHints {
             horizontal_scaling,
@@ -343,8 +354,7 @@ impl DockerComposeAnalyzer {
 
         match parts.len() {
             1 => {
-                let container_port = parts[0].parse::<u16>()
-                    .context("Invalid container port")?;
+                let container_port = parts[0].parse::<u16>().context("Invalid container port")?;
                 Ok(PortMapping {
                     host_port: None,
                     container_port,
@@ -354,8 +364,7 @@ impl DockerComposeAnalyzer {
             }
             2 => {
                 let host_port = parts[0].parse::<u16>().ok();
-                let container_port = parts[1].parse::<u16>()
-                    .context("Invalid container port")?;
+                let container_port = parts[1].parse::<u16>().context("Invalid container port")?;
                 Ok(PortMapping {
                     host_port,
                     container_port,
@@ -420,11 +429,13 @@ impl DockerComposeAnalyzer {
             let target = parts[1].to_string();
             let read_only = parts.get(2).map_or(false, |&opt| opt.contains("ro"));
 
-            let mount_type = if source.starts_with('/') || source.starts_with("./") || source.starts_with("../") {
-                VolumeMountType::Bind
-            } else {
-                VolumeMountType::Volume
-            };
+            let mount_type =
+                if source.starts_with('/') || source.starts_with("./") || source.starts_with("../")
+                {
+                    VolumeMountType::Bind
+                } else {
+                    VolumeMountType::Volume
+                };
 
             Ok(VolumeMount {
                 source,
@@ -508,14 +519,26 @@ impl DockerComposeAnalyzer {
         if let Some(deploy) = service_config.get("deploy") {
             if let Some(resources) = deploy.get("resources") {
                 if let Some(limits_section) = resources.get("limits") {
-                    limits.memory = limits_section.get("memory").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    limits.cpu = limits_section.get("cpus").and_then(|v| v.as_str()).map(|s| s.to_string());
+                    limits.memory = limits_section
+                        .get("memory")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    limits.cpu = limits_section
+                        .get("cpus")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
                 }
             }
         }
 
-        limits.cpu_shares = service_config.get("cpu_shares").and_then(|v| v.as_u64()).map(|v| v as u32);
-        limits.pids_limit = service_config.get("pids_limit").and_then(|v| v.as_u64()).map(|v| v as u32);
+        limits.cpu_shares = service_config
+            .get("cpu_shares")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u32);
+        limits.pids_limit = service_config
+            .get("pids_limit")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as u32);
 
         Ok(limits)
     }
@@ -525,22 +548,33 @@ impl DockerComposeAnalyzer {
             let test = if let Some(test_value) = healthcheck.get("test") {
                 match test_value {
                     Value::String(test_str) => vec![test_str.clone()],
-                    Value::Sequence(test_array) => {
-                        test_array.iter()
-                            .filter_map(|v| v.as_str())
-                            .map(|s| s.to_string())
-                            .collect()
-                    }
-                    _ => vec![]
+                    Value::Sequence(test_array) => test_array
+                        .iter()
+                        .filter_map(|v| v.as_str())
+                        .map(|s| s.to_string())
+                        .collect(),
+                    _ => vec![],
                 }
             } else {
                 vec![]
             };
 
-            let interval = healthcheck.get("interval").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let timeout = healthcheck.get("timeout").and_then(|v| v.as_str()).map(|s| s.to_string());
-            let retries = healthcheck.get("retries").and_then(|v| v.as_u64()).map(|v| v as u32);
-            let start_period = healthcheck.get("start_period").and_then(|v| v.as_str()).map(|s| s.to_string());
+            let interval = healthcheck
+                .get("interval")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let timeout = healthcheck
+                .get("timeout")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let retries = healthcheck
+                .get("retries")
+                .and_then(|v| v.as_u64())
+                .map(|v| v as u32);
+            let start_period = healthcheck
+                .get("start_period")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
 
             return Ok(Some(HealthCheck {
                 test,
@@ -562,34 +596,38 @@ impl DockerComposeAnalyzer {
                 for (volume_name, volume_config) in volumes_map {
                     let name = volume_name.as_str().unwrap_or("unknown").to_string();
 
-                    let (driver, driver_opts, external) = if let Some(config) = volume_config.as_mapping() {
-                        let driver = config.get("driver")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("local")
-                            .to_string();
+                    let (driver, driver_opts, external) =
+                        if let Some(config) = volume_config.as_mapping() {
+                            let driver = config
+                                .get("driver")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("local")
+                                .to_string();
 
-                        let driver_opts = if let Some(opts) = config.get("driver_opts") {
-                            if let Some(opts_map) = opts.as_mapping() {
-                                opts_map.iter()
-                                    .filter_map(|(k, v)| {
-                                        Some((k.as_str()?.to_string(), v.as_str()?.to_string()))
-                                    })
-                                    .collect()
+                            let driver_opts = if let Some(opts) = config.get("driver_opts") {
+                                if let Some(opts_map) = opts.as_mapping() {
+                                    opts_map
+                                        .iter()
+                                        .filter_map(|(k, v)| {
+                                            Some((k.as_str()?.to_string(), v.as_str()?.to_string()))
+                                        })
+                                        .collect()
+                                } else {
+                                    HashMap::new()
+                                }
                             } else {
                                 HashMap::new()
-                            }
+                            };
+
+                            let external = config
+                                .get("external")
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(false);
+
+                            (driver, driver_opts, external)
                         } else {
-                            HashMap::new()
+                            ("local".to_string(), HashMap::new(), false)
                         };
-
-                        let external = config.get("external")
-                            .and_then(|v| v.as_bool())
-                            .unwrap_or(false);
-
-                        (driver, driver_opts, external)
-                    } else {
-                        ("local".to_string(), HashMap::new(), false)
-                    };
 
                     volumes.push(VolumeAnalysis {
                         name,
@@ -613,15 +651,19 @@ impl DockerComposeAnalyzer {
                 for (network_name, network_config) in networks_map {
                     let name = network_name.as_str().unwrap_or("unknown").to_string();
 
-                    let (driver, driver_opts, external, ipam) = if let Some(config) = network_config.as_mapping() {
-                        let driver = config.get("driver")
+                    let (driver, driver_opts, external, ipam) = if let Some(config) =
+                        network_config.as_mapping()
+                    {
+                        let driver = config
+                            .get("driver")
                             .and_then(|v| v.as_str())
                             .unwrap_or("bridge")
                             .to_string();
 
                         let driver_opts = if let Some(opts) = config.get("driver_opts") {
                             if let Some(opts_map) = opts.as_mapping() {
-                                opts_map.iter()
+                                opts_map
+                                    .iter()
                                     .filter_map(|(k, v)| {
                                         Some((k.as_str()?.to_string(), v.as_str()?.to_string()))
                                     })
@@ -633,25 +675,32 @@ impl DockerComposeAnalyzer {
                             HashMap::new()
                         };
 
-                        let external = config.get("external")
+                        let external = config
+                            .get("external")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false);
 
                         let ipam = config.get("ipam").and_then(|ipam_config| {
                             if let Some(ipam_map) = ipam_config.as_mapping() {
-                                let driver = ipam_map.get("driver")
+                                let driver = ipam_map
+                                    .get("driver")
                                     .and_then(|v| v.as_str())
                                     .unwrap_or("default")
                                     .to_string();
 
-                                let config = if let Some(config_array) = ipam_map.get("config").and_then(|v| v.as_sequence()) {
-                                    config_array.iter()
+                                let config = if let Some(config_array) =
+                                    ipam_map.get("config").and_then(|v| v.as_sequence())
+                                {
+                                    config_array
+                                        .iter()
                                         .filter_map(|subnet_config| {
                                             if let Some(subnet_map) = subnet_config.as_mapping() {
-                                                let subnet = subnet_map.get("subnet")
+                                                let subnet = subnet_map
+                                                    .get("subnet")
                                                     .and_then(|v| v.as_str())?
                                                     .to_string();
-                                                let gateway = subnet_map.get("gateway")
+                                                let gateway = subnet_map
+                                                    .get("gateway")
                                                     .and_then(|v| v.as_str())
                                                     .map(|s| s.to_string());
                                                 Some(IpamSubnet { subnet, gateway })
@@ -698,11 +747,13 @@ impl DockerComposeAnalyzer {
                     let name = secret_name.as_str().unwrap_or("unknown").to_string();
 
                     let (file, external) = if let Some(config) = secret_config.as_mapping() {
-                        let file = config.get("file")
+                        let file = config
+                            .get("file")
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string());
 
-                        let external = config.get("external")
+                        let external = config
+                            .get("external")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false);
 
@@ -733,11 +784,13 @@ impl DockerComposeAnalyzer {
                     let name = config_name.as_str().unwrap_or("unknown").to_string();
 
                     let (file, external) = if let Some(config) = config_config.as_mapping() {
-                        let file = config.get("file")
+                        let file = config
+                            .get("file")
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string());
 
-                        let external = config.get("external")
+                        let external = config
+                            .get("external")
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false);
 
@@ -759,7 +812,12 @@ impl DockerComposeAnalyzer {
         Ok(configs)
     }
 
-    pub fn calculate_complexity_score(&self, services: &[ServiceAnalysis], volumes: &[VolumeAnalysis], networks: &[NetworkAnalysis]) -> u32 {
+    pub fn calculate_complexity_score(
+        &self,
+        services: &[ServiceAnalysis],
+        volumes: &[VolumeAnalysis],
+        networks: &[NetworkAnalysis],
+    ) -> u32 {
         let mut score = 0;
 
         score += services.len() as u32 * 10;
@@ -775,7 +833,10 @@ impl DockerComposeAnalyzer {
                 score += 5;
             }
 
-            if matches!(service.service_type, ServiceType::Database | ServiceType::Storage) {
+            if matches!(
+                service.service_type,
+                ServiceType::Database | ServiceType::Storage
+            ) {
                 score += 10;
             }
         }
@@ -783,29 +844,55 @@ impl DockerComposeAnalyzer {
         score
     }
 
-    fn generate_recommendations(&self, services: &[ServiceAnalysis], _volumes: &[VolumeAnalysis], _networks: &[NetworkAnalysis]) -> Vec<String> {
+    fn generate_recommendations(
+        &self,
+        services: &[ServiceAnalysis],
+        _volumes: &[VolumeAnalysis],
+        _networks: &[NetworkAnalysis],
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         for service in services {
-            if service.health_check.is_none() && matches!(service.service_type, ServiceType::WebApp | ServiceType::Database) {
+            if service.health_check.is_none()
+                && matches!(
+                    service.service_type,
+                    ServiceType::WebApp | ServiceType::Database
+                )
+            {
                 recommendations.push(format!("Add health check for service '{}'", service.name));
             }
 
             if service.resource_limits.memory.is_none() || service.resource_limits.cpu.is_none() {
-                recommendations.push(format!("Define resource limits for service '{}'", service.name));
+                recommendations.push(format!(
+                    "Define resource limits for service '{}'",
+                    service.name
+                ));
             }
 
             if service.scaling_hints.stateful && service.scaling_hints.horizontal_scaling {
-                recommendations.push(format!("Service '{}' appears stateful but configured for horizontal scaling", service.name));
+                recommendations.push(format!(
+                    "Service '{}' appears stateful but configured for horizontal scaling",
+                    service.name
+                ));
             }
 
-            if matches!(service.service_type, ServiceType::Database) && !service.volumes.iter().any(|v| matches!(v.mount_type, VolumeMountType::Volume)) {
-                recommendations.push(format!("Database service '{}' should use persistent volumes", service.name));
+            if matches!(service.service_type, ServiceType::Database)
+                && !service
+                    .volumes
+                    .iter()
+                    .any(|v| matches!(v.mount_type, VolumeMountType::Volume))
+            {
+                recommendations.push(format!(
+                    "Database service '{}' should use persistent volumes",
+                    service.name
+                ));
             }
         }
 
         if services.len() > 10 {
-            recommendations.push("Consider breaking down the application into smaller microservices".to_string());
+            recommendations.push(
+                "Consider breaking down the application into smaller microservices".to_string(),
+            );
         }
 
         recommendations
@@ -814,30 +901,42 @@ impl DockerComposeAnalyzer {
     pub fn print_analysis_table(&self, analysis: &DockerComposeAnalysis) -> Result<()> {
         println!("{}", "📊 Docker Compose Analysis".bold().blue());
         println!("Version: {}", analysis.version.yellow());
-        println!("Complexity Score: {}", analysis.complexity_score.to_string().red());
+        println!(
+            "Complexity Score: {}",
+            analysis.complexity_score.to_string().red()
+        );
         println!();
 
         println!("{}", "🔧 Services:".bold().green());
         for service in &analysis.services {
-            println!("  {} {} ({})",
+            println!(
+                "  {} {} ({})",
                 "•".blue(),
                 service.name.bold(),
                 format!("{:?}", service.service_type).yellow()
             );
             println!("    Image: {}", service.image.cyan());
             if !service.ports.is_empty() {
-                println!("    Ports: {}",
-                    service.ports.iter()
-                        .map(|p| format!("{}:{}",
+                println!(
+                    "    Ports: {}",
+                    service
+                        .ports
+                        .iter()
+                        .map(|p| format!(
+                            "{}:{}",
                             p.host_port.map_or("*".to_string(), |hp| hp.to_string()),
-                            p.container_port))
+                            p.container_port
+                        ))
                         .collect::<Vec<_>>()
                         .join(", ")
                         .yellow()
                 );
             }
             if !service.depends_on.is_empty() {
-                println!("    Depends on: {}", service.depends_on.join(", ").magenta());
+                println!(
+                    "    Depends on: {}",
+                    service.depends_on.join(", ").magenta()
+                );
             }
             println!();
         }
@@ -845,7 +944,8 @@ impl DockerComposeAnalyzer {
         if !analysis.volumes.is_empty() {
             println!("{}", "💾 Volumes:".bold().green());
             for volume in &analysis.volumes {
-                println!("  {} {} ({})",
+                println!(
+                    "  {} {} ({})",
                     "•".blue(),
                     volume.name.bold(),
                     volume.driver.yellow()
@@ -857,7 +957,8 @@ impl DockerComposeAnalyzer {
         if !analysis.networks.is_empty() {
             println!("{}", "🌐 Networks:".bold().green());
             for network in &analysis.networks {
-                println!("  {} {} ({})",
+                println!(
+                    "  {} {} ({})",
                     "•".blue(),
                     network.name.bold(),
                     network.driver.yellow()

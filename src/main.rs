@@ -97,8 +97,18 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Convert { input, output, production, yes } => {
-            println!("{}", "🚀 Starting Docker Compose to Kubernetes conversion...".bold().green());
+        Commands::Convert {
+            input,
+            output,
+            production,
+            yes,
+        } => {
+            println!(
+                "{}",
+                "🚀 Starting Docker Compose to Kubernetes conversion..."
+                    .bold()
+                    .green()
+            );
 
             let analyzer = DockerComposeAnalyzer::new();
             let analysis = analyzer.analyze(&input).await?;
@@ -108,7 +118,9 @@ async fn main() -> Result<()> {
 
             let converter = KubernetesConverter::new();
             let manifests = if production {
-                converter.convert_with_production_patterns(&analysis, &patterns).await?
+                converter
+                    .convert_with_production_patterns(&analysis, &patterns)
+                    .await?
             } else {
                 converter.convert_basic(&analysis).await?
             };
@@ -120,11 +132,22 @@ async fn main() -> Result<()> {
 
             converter.save_manifests(&manifests, &output).await?;
 
-            println!("{}", format!("✅ Conversion complete! Manifests saved to {}", output.display()).bold().green());
+            println!(
+                "{}",
+                format!(
+                    "✅ Conversion complete! Manifests saved to {}",
+                    output.display()
+                )
+                .bold()
+                .green()
+            );
         }
 
         Commands::Wizard { input } => {
-            println!("{}", "🧙 Welcome to the K8sify Interactive Wizard!".bold().blue());
+            println!(
+                "{}",
+                "🧙 Welcome to the K8sify Interactive Wizard!".bold().blue()
+            );
 
             let wizard = InteractiveWizard::new();
             wizard.run(input).await?;
@@ -144,7 +167,11 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::Cost { input, provider, region } => {
+        Commands::Cost {
+            input,
+            provider,
+            region,
+        } => {
             println!("{}", "💰 Estimating cloud costs...".bold().yellow());
 
             let analyzer = DockerComposeAnalyzer::new();

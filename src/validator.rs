@@ -114,15 +114,28 @@ struct GenericValidator;
 
 impl ManifestValidator {
     pub fn new() -> Self {
-        let mut resource_validators: HashMap<KubernetesResourceType, Box<dyn ResourceValidator>> = HashMap::new();
+        let mut resource_validators: HashMap<KubernetesResourceType, Box<dyn ResourceValidator>> =
+            HashMap::new();
 
-        resource_validators.insert(KubernetesResourceType::Deployment, Box::new(DeploymentValidator));
+        resource_validators.insert(
+            KubernetesResourceType::Deployment,
+            Box::new(DeploymentValidator),
+        );
         resource_validators.insert(KubernetesResourceType::Service, Box::new(ServiceValidator));
-        resource_validators.insert(KubernetesResourceType::ConfigMap, Box::new(ConfigMapValidator));
+        resource_validators.insert(
+            KubernetesResourceType::ConfigMap,
+            Box::new(ConfigMapValidator),
+        );
         resource_validators.insert(KubernetesResourceType::Secret, Box::new(SecretValidator));
-        resource_validators.insert(KubernetesResourceType::PersistentVolumeClaim, Box::new(PvcValidator));
+        resource_validators.insert(
+            KubernetesResourceType::PersistentVolumeClaim,
+            Box::new(PvcValidator),
+        );
         resource_validators.insert(KubernetesResourceType::Ingress, Box::new(IngressValidator));
-        resource_validators.insert(KubernetesResourceType::HorizontalPodAutoscaler, Box::new(HpaValidator));
+        resource_validators.insert(
+            KubernetesResourceType::HorizontalPodAutoscaler,
+            Box::new(HpaValidator),
+        );
 
         Self {
             resource_validators,
@@ -157,7 +170,9 @@ impl ManifestValidator {
 
             warnings += file_result.warnings.len() as u32;
 
-            *resource_counts.entry(file_result.file_type.clone()).or_insert(0) += 1;
+            *resource_counts
+                .entry(file_result.file_type.clone())
+                .or_insert(0) += 1;
             file_results.push(file_result);
         }
 
@@ -188,8 +203,8 @@ impl ManifestValidator {
             .await
             .context("Failed to read file")?;
 
-        let documents: Vec<Value> = serde_yaml::from_str(&content)
-            .context("Failed to parse YAML")?;
+        let documents: Vec<Value> =
+            serde_yaml::from_str(&content).context("Failed to parse YAML")?;
 
         let mut all_errors = Vec::new();
         let mut all_warnings = Vec::new();
@@ -246,7 +261,10 @@ impl ManifestValidator {
         }
     }
 
-    fn validate_basic_structure(&self, resource: &Value) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
+    fn validate_basic_structure(
+        &self,
+        resource: &Value,
+    ) -> Result<(Vec<ValidationError>, Vec<ValidationWarning>)> {
         let mut errors = Vec::new();
         let mut warnings = Vec::new();
 
@@ -295,7 +313,10 @@ impl ManifestValidator {
                             warning_type: WarningType::BestPractice,
                             message: format!("Missing recommended label: {}", label),
                             path: format!("metadata.labels.{}", label),
-                            recommendation: format!("Add {} label for better resource management", label),
+                            recommendation: format!(
+                                "Add {} label for better resource management",
+                                label
+                            ),
                         });
                     }
                 }
@@ -339,31 +360,45 @@ impl ManifestValidator {
         let validity_score = (valid_files as f32 / total_files as f32) * 70.0;
         let warning_penalty = (warnings as f32 / total_files as f32) * 10.0;
 
-        (validity_score + 30.0 - warning_penalty).max(0.0).min(100.0)
+        (validity_score + 30.0 - warning_penalty)
+            .max(0.0)
+            .min(100.0)
     }
 
-    fn generate_overall_recommendations(&self, file_results: &[FileValidationResult]) -> Vec<String> {
+    fn generate_overall_recommendations(
+        &self,
+        file_results: &[FileValidationResult],
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         let error_count: usize = file_results.iter().map(|r| r.errors.len()).sum();
         let warning_count: usize = file_results.iter().map(|r| r.warnings.len()).sum();
 
         if error_count > 0 {
-            recommendations.push("Fix all validation errors before deploying to production".to_string());
+            recommendations
+                .push("Fix all validation errors before deploying to production".to_string());
         }
 
         if warning_count > 5 {
-            recommendations.push("Address warnings to improve manifest quality and maintainability".to_string());
+            recommendations.push(
+                "Address warnings to improve manifest quality and maintainability".to_string(),
+            );
         }
 
-        recommendations.push("Use kubectl dry-run to validate manifests before applying".to_string());
+        recommendations
+            .push("Use kubectl dry-run to validate manifests before applying".to_string());
         recommendations.push("Implement CI/CD validation pipelines".to_string());
-        recommendations.push("Consider using tools like kubeval or kustomize for validation".to_string());
+        recommendations
+            .push("Consider using tools like kubeval or kustomize for validation".to_string());
 
         recommendations
     }
 
-    fn generate_file_recommendations(&self, errors: &[ValidationError], warnings: &[ValidationWarning]) -> Vec<String> {
+    fn generate_file_recommendations(
+        &self,
+        errors: &[ValidationError],
+        warnings: &[ValidationWarning],
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if !errors.is_empty() {
@@ -371,7 +406,8 @@ impl ManifestValidator {
         }
 
         if warnings.len() > 3 {
-            recommendations.push("Consider addressing warnings to improve resource quality".to_string());
+            recommendations
+                .push("Consider addressing warnings to improve resource quality".to_string());
         }
 
         recommendations.push("Test this manifest in a development environment first".to_string());
@@ -380,15 +416,24 @@ impl ManifestValidator {
     }
 
     pub fn print_validation_results(&self, results: &ValidationResults) -> Result<()> {
-        println!("{}", "✅ Kubernetes Manifest Validation Results".bold().green());
+        println!(
+            "{}",
+            "✅ Kubernetes Manifest Validation Results".bold().green()
+        );
         println!();
 
         println!("{}", "📊 Summary:".bold().white());
         println!("  Total files: {}", results.total_files.to_string().cyan());
         println!("  Valid files: {}", results.valid_files.to_string().green());
-        println!("  Invalid files: {}", results.invalid_files.to_string().red());
+        println!(
+            "  Invalid files: {}",
+            results.invalid_files.to_string().red()
+        );
         println!("  Warnings: {}", results.warnings.to_string().yellow());
-        println!("  Overall score: {:.1}%", results.summary.overall_score.to_string().blue());
+        println!(
+            "  Overall score: {:.1}%",
+            results.summary.overall_score.to_string().blue()
+        );
         println!();
 
         // Resource type breakdown
@@ -410,7 +455,8 @@ impl ManifestValidator {
                     "❌ INVALID".red()
                 };
 
-                println!("  {} {} ({:?})",
+                println!(
+                    "  {} {} ({:?})",
                     status,
                     file_result.file_path.cyan(),
                     file_result.file_type
@@ -425,7 +471,8 @@ impl ManifestValidator {
                         ErrorSeverity::Low => "green",
                     };
 
-                    println!("    {} {} ({})",
+                    println!(
+                        "    {} {} ({})",
                         "ERROR:".red().bold(),
                         error.message,
                         format!("{:?}", error.severity).color(severity_color)
@@ -434,10 +481,7 @@ impl ManifestValidator {
 
                 // Show warnings
                 for warning in &file_result.warnings {
-                    println!("    {} {}",
-                        "WARNING:".yellow().bold(),
-                        warning.message
-                    );
+                    println!("    {} {}", "WARNING:".yellow().bold(), warning.message);
                 }
 
                 if !file_result.errors.is_empty() || !file_result.warnings.is_empty() {
@@ -483,14 +527,16 @@ impl ResourceValidator for DeploymentValidator {
                             warning_type: WarningType::Performance,
                             message: "Replica count is 0".to_string(),
                             path: "spec.replicas".to_string(),
-                            recommendation: "Consider setting replicas > 0 for availability".to_string(),
+                            recommendation: "Consider setting replicas > 0 for availability"
+                                .to_string(),
                         });
                     } else if replica_count == 1 {
                         warnings.push(ValidationWarning {
                             warning_type: WarningType::Performance,
                             message: "Single replica deployment".to_string(),
                             path: "spec.replicas".to_string(),
-                            recommendation: "Consider multiple replicas for high availability".to_string(),
+                            recommendation: "Consider multiple replicas for high availability"
+                                .to_string(),
                         });
                     }
                 }
@@ -507,8 +553,10 @@ impl ResourceValidator for DeploymentValidator {
                                     warnings.push(ValidationWarning {
                                         warning_type: WarningType::BestPractice,
                                         message: "Container missing resource limits".to_string(),
-                                        path: "spec.template.spec.containers[].resources".to_string(),
-                                        recommendation: "Add resource requests and limits".to_string(),
+                                        path: "spec.template.spec.containers[].resources"
+                                            .to_string(),
+                                        recommendation: "Add resource requests and limits"
+                                            .to_string(),
                                     });
                                 }
 

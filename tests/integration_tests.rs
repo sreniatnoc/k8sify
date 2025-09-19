@@ -172,7 +172,8 @@ services:
     let patterns = pattern_detector.detect_patterns(&analysis)?;
 
     // Should detect web app patterns
-    let web_patterns: Vec<_> = patterns.iter()
+    let web_patterns: Vec<_> = patterns
+        .iter()
         .filter(|p| matches!(p.pattern_type, k8sify::patterns::PatternType::WebApp))
         .collect();
 
@@ -213,7 +214,9 @@ services:
     let patterns = pattern_detector.detect_patterns(&analysis)?;
 
     let converter = KubernetesConverter::new();
-    let manifests = converter.convert_with_production_patterns(&analysis, &patterns).await?;
+    let manifests = converter
+        .convert_with_production_patterns(&analysis, &patterns)
+        .await?;
 
     // Production conversion should include more resources
     assert!(!manifests.horizontal_pod_autoscalers.is_empty());
@@ -269,7 +272,9 @@ async fn test_error_handling() -> Result<()> {
     let analyzer = DockerComposeAnalyzer::new();
 
     // Test with non-existent file
-    let result = analyzer.analyze(&PathBuf::from("non-existent-file.yml")).await;
+    let result = analyzer
+        .analyze(&PathBuf::from("non-existent-file.yml"))
+        .await;
     assert!(result.is_err());
 
     Ok(())
@@ -387,7 +392,9 @@ networks:
     assert!(patterns.len() >= 3);
 
     let converter = KubernetesConverter::new();
-    let manifests = converter.convert_with_production_patterns(&analysis, &patterns).await?;
+    let manifests = converter
+        .convert_with_production_patterns(&analysis, &patterns)
+        .await?;
 
     // Should generate comprehensive manifests
     assert_eq!(manifests.deployments.len(), 5);

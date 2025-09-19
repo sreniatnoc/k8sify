@@ -162,7 +162,10 @@ impl PatternDetector {
         }
     }
 
-    pub fn detect_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    pub fn detect_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         // Detect individual service patterns
@@ -178,7 +181,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_web_app_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_web_app_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         for service in &analysis.services {
@@ -203,7 +209,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_database_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_database_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         for service in &analysis.services {
@@ -228,7 +237,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_cache_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_cache_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         for service in &analysis.services {
@@ -253,7 +265,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_message_queue_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_message_queue_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         for service in &analysis.services {
@@ -268,7 +283,9 @@ impl PatternDetector {
                         pattern_type: PatternType::MessageQueue,
                         services: vec![service.name.clone()],
                         confidence,
-                        production_pattern: ProductionPattern::MessageQueuePattern(production_pattern),
+                        production_pattern: ProductionPattern::MessageQueuePattern(
+                            production_pattern,
+                        ),
                         recommendations,
                     });
                 }
@@ -278,7 +295,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_load_balancer_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_load_balancer_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         for service in &analysis.services {
@@ -293,7 +313,9 @@ impl PatternDetector {
                         pattern_type: PatternType::LoadBalancer,
                         services: vec![service.name.clone()],
                         confidence,
-                        production_pattern: ProductionPattern::LoadBalancerPattern(production_pattern),
+                        production_pattern: ProductionPattern::LoadBalancerPattern(
+                            production_pattern,
+                        ),
                         recommendations,
                     });
                 }
@@ -303,7 +325,10 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn detect_architectural_patterns(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<DetectedPattern>> {
+    fn detect_architectural_patterns(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<DetectedPattern>> {
         let mut patterns = Vec::new();
 
         // Three-tier architecture detection
@@ -312,7 +337,9 @@ impl PatternDetector {
                 pattern_type: PatternType::ThreeTierArchitecture,
                 services: analysis.services.iter().map(|s| s.name.clone()).collect(),
                 confidence: 0.9,
-                production_pattern: ProductionPattern::WebAppPattern(self.create_default_web_app_pattern()),
+                production_pattern: ProductionPattern::WebAppPattern(
+                    self.create_default_web_app_pattern(),
+                ),
                 recommendations: vec![
                     "Detected three-tier architecture (presentation, business, data)".to_string(),
                     "Consider implementing proper network segmentation".to_string(),
@@ -328,7 +355,9 @@ impl PatternDetector {
                 pattern_type: PatternType::MicroservicesStack,
                 services: analysis.services.iter().map(|s| s.name.clone()).collect(),
                 confidence: 0.8,
-                production_pattern: ProductionPattern::WebAppPattern(self.create_microservices_pattern()),
+                production_pattern: ProductionPattern::WebAppPattern(
+                    self.create_microservices_pattern(),
+                ),
                 recommendations: vec![
                     "Detected microservices architecture".to_string(),
                     "Implement service discovery (e.g., Consul, Eureka)".to_string(),
@@ -345,7 +374,9 @@ impl PatternDetector {
                 pattern_type: PatternType::MonolithWithDatabase,
                 services: analysis.services.iter().map(|s| s.name.clone()).collect(),
                 confidence: 0.85,
-                production_pattern: ProductionPattern::WebAppPattern(self.create_monolith_pattern()),
+                production_pattern: ProductionPattern::WebAppPattern(
+                    self.create_monolith_pattern(),
+                ),
                 recommendations: vec![
                     "Detected monolithic architecture with database".to_string(),
                     "Consider implementing horizontal scaling for the application".to_string(),
@@ -371,14 +402,21 @@ impl PatternDetector {
 
         // Check ports
         for port in &service.ports {
-            if port.container_port == 80 || port.container_port == 443 || port.container_port == 8080 {
+            if port.container_port == 80
+                || port.container_port == 443
+                || port.container_port == 8080
+            {
                 confidence += 0.3;
                 break;
             }
         }
 
         // Check environment variables
-        if service.environment.keys().any(|k| k.contains("PORT") || k.contains("HOST")) {
+        if service
+            .environment
+            .keys()
+            .any(|k| k.contains("PORT") || k.contains("HOST"))
+        {
             confidence += 0.2;
         }
 
@@ -403,13 +441,20 @@ impl PatternDetector {
 
         // Check for database-specific environment variables
         if service.environment.keys().any(|k| {
-            k.contains("DATABASE") || k.contains("DB_") || k.contains("POSTGRES") || k.contains("MYSQL")
+            k.contains("DATABASE")
+                || k.contains("DB_")
+                || k.contains("POSTGRES")
+                || k.contains("MYSQL")
         }) {
             confidence += 0.3;
         }
 
         // Check for persistent volumes
-        if service.volumes.iter().any(|v| v.target.contains("/var/lib") || v.target.contains("/data")) {
+        if service
+            .volumes
+            .iter()
+            .any(|v| v.target.contains("/var/lib") || v.target.contains("/data"))
+        {
             confidence += 0.2;
         }
 
@@ -426,7 +471,11 @@ impl PatternDetector {
             }
         }
 
-        if service.environment.keys().any(|k| k.contains("REDIS") || k.contains("CACHE")) {
+        if service
+            .environment
+            .keys()
+            .any(|k| k.contains("REDIS") || k.contains("CACHE"))
+        {
             confidence += 0.4;
         }
 
@@ -443,9 +492,11 @@ impl PatternDetector {
             }
         }
 
-        if service.environment.keys().any(|k| {
-            k.contains("QUEUE") || k.contains("RABBITMQ") || k.contains("KAFKA")
-        }) {
+        if service
+            .environment
+            .keys()
+            .any(|k| k.contains("QUEUE") || k.contains("RABBITMQ") || k.contains("KAFKA"))
+        {
             confidence += 0.4;
         }
 
@@ -463,12 +514,20 @@ impl PatternDetector {
         }
 
         // Check for load balancer ports
-        if service.ports.iter().any(|p| p.container_port == 80 || p.container_port == 443) {
+        if service
+            .ports
+            .iter()
+            .any(|p| p.container_port == 80 || p.container_port == 443)
+        {
             confidence += 0.3;
         }
 
         // Check for upstream configuration
-        if service.environment.keys().any(|k| k.contains("UPSTREAM") || k.contains("BACKEND")) {
+        if service
+            .environment
+            .keys()
+            .any(|k| k.contains("UPSTREAM") || k.contains("BACKEND"))
+        {
             confidence += 0.2;
         }
 
@@ -476,8 +535,14 @@ impl PatternDetector {
     }
 
     pub fn has_three_tier_architecture(&self, analysis: &DockerComposeAnalysis) -> bool {
-        let has_web = analysis.services.iter().any(|s| matches!(s.service_type, ServiceType::WebApp));
-        let has_database = analysis.services.iter().any(|s| matches!(s.service_type, ServiceType::Database));
+        let has_web = analysis
+            .services
+            .iter()
+            .any(|s| matches!(s.service_type, ServiceType::WebApp));
+        let has_database = analysis
+            .services
+            .iter()
+            .any(|s| matches!(s.service_type, ServiceType::Database));
         let has_business_logic = analysis.services.len() >= 3;
 
         has_web && has_database && has_business_logic
@@ -485,20 +550,23 @@ impl PatternDetector {
 
     pub fn has_microservices_characteristics(&self, analysis: &DockerComposeAnalysis) -> bool {
         // Multiple services with different responsibilities
-        let service_types: std::collections::HashSet<_> = analysis.services
-            .iter()
-            .map(|s| &s.service_type)
-            .collect();
+        let service_types: std::collections::HashSet<_> =
+            analysis.services.iter().map(|s| &s.service_type).collect();
 
         service_types.len() >= 3 && analysis.services.iter().any(|s| !s.depends_on.is_empty())
     }
 
     fn has_monolith_characteristics(&self, analysis: &DockerComposeAnalysis) -> bool {
-        let has_single_app = analysis.services.iter()
+        let has_single_app = analysis
+            .services
+            .iter()
             .filter(|s| matches!(s.service_type, ServiceType::WebApp))
-            .count() == 1;
+            .count()
+            == 1;
 
-        let has_database = analysis.services.iter()
+        let has_database = analysis
+            .services
+            .iter()
             .any(|s| matches!(s.service_type, ServiceType::Database));
 
         has_single_app && has_database
@@ -510,8 +578,16 @@ impl PatternDetector {
             enable_ingress: true,
             enable_monitoring: true,
             enable_ssl: true,
-            min_replicas: if service.scaling_hints.horizontal_scaling { 2 } else { 1 },
-            max_replicas: if service.scaling_hints.horizontal_scaling { 10 } else { 3 },
+            min_replicas: if service.scaling_hints.horizontal_scaling {
+                2
+            } else {
+                1
+            },
+            max_replicas: if service.scaling_hints.horizontal_scaling {
+                10
+            } else {
+                3
+            },
             target_cpu_percentage: 70,
             health_check_enabled: service.health_check.is_some(),
             readiness_probe_enabled: true,
@@ -532,7 +608,12 @@ impl PatternDetector {
             enable_backup: true,
             enable_replication: false,
             storage_class: "fast-ssd".to_string(),
-            storage_size: if service.image.contains("postgres") { "20Gi" } else { "10Gi" }.to_string(),
+            storage_size: if service.image.contains("postgres") {
+                "20Gi"
+            } else {
+                "10Gi"
+            }
+            .to_string(),
             enable_network_policy: true,
             enable_secrets: true,
             enable_monitoring: true,
@@ -566,7 +647,10 @@ impl PatternDetector {
         }
     }
 
-    fn create_message_queue_production_pattern(&self, _service: &ServiceAnalysis) -> MessageQueuePattern {
+    fn create_message_queue_production_pattern(
+        &self,
+        _service: &ServiceAnalysis,
+    ) -> MessageQueuePattern {
         MessageQueuePattern {
             enable_persistence: true,
             enable_clustering: false,
@@ -584,7 +668,10 @@ impl PatternDetector {
         }
     }
 
-    fn create_load_balancer_production_pattern(&self, _service: &ServiceAnalysis) -> LoadBalancerPattern {
+    fn create_load_balancer_production_pattern(
+        &self,
+        _service: &ServiceAnalysis,
+    ) -> LoadBalancerPattern {
         LoadBalancerPattern {
             algorithm: "round_robin".to_string(),
             health_check_enabled: true,
@@ -688,7 +775,8 @@ impl PatternDetector {
     fn generate_database_recommendations(&self, service: &ServiceAnalysis) -> Vec<String> {
         let mut recommendations = Vec::new();
 
-        recommendations.push("Enable persistent storage with appropriate storage class".to_string());
+        recommendations
+            .push("Enable persistent storage with appropriate storage class".to_string());
         recommendations.push("Implement database backup strategy".to_string());
         recommendations.push("Use Kubernetes secrets for database credentials".to_string());
         recommendations.push("Apply network policies to restrict database access".to_string());
@@ -698,7 +786,8 @@ impl PatternDetector {
         }
 
         if service.image.contains("postgres") {
-            recommendations.push("Consider using PostgreSQL operator for advanced features".to_string());
+            recommendations
+                .push("Consider using PostgreSQL operator for advanced features".to_string());
         } else if service.image.contains("mysql") {
             recommendations.push("Consider using MySQL operator for clustering".to_string());
         }
@@ -712,12 +801,14 @@ impl PatternDetector {
         let mut recommendations = Vec::new();
 
         if service.image.contains("redis") {
-            recommendations.push("Configure Redis persistence if data durability is required".to_string());
+            recommendations
+                .push("Configure Redis persistence if data durability is required".to_string());
             recommendations.push("Set appropriate eviction policy based on use case".to_string());
             recommendations.push("Consider Redis Cluster for high availability".to_string());
         }
 
-        recommendations.push("Set memory limits to prevent cache from consuming all memory".to_string());
+        recommendations
+            .push("Set memory limits to prevent cache from consuming all memory".to_string());
         recommendations.push("Enable cache monitoring and metrics".to_string());
         recommendations.push("Consider implementing cache warming strategies".to_string());
 

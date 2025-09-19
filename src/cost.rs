@@ -147,11 +147,11 @@ impl CostEstimator {
 
     fn get_aws_pricing(_region: &str) -> PricingData {
         PricingData {
-            cpu_per_hour: 0.04,        // EKS node per vCPU
-            memory_per_gb_hour: 0.004, // EKS node per GB RAM
-            storage_per_gb_month: 0.10, // EBS gp3
-            load_balancer_per_hour: 0.025, // ALB
-            data_transfer_per_gb: 0.09, // Data transfer out
+            cpu_per_hour: 0.04,                // EKS node per vCPU
+            memory_per_gb_hour: 0.004,         // EKS node per GB RAM
+            storage_per_gb_month: 0.10,        // EBS gp3
+            load_balancer_per_hour: 0.025,     // ALB
+            data_transfer_per_gb: 0.09,        // Data transfer out
             cluster_management_per_hour: 0.10, // EKS cluster
         }
     }
@@ -184,7 +184,7 @@ impl CostEstimator {
             memory_per_gb_hour: 0.009,
             storage_per_gb_month: 0.10,
             load_balancer_per_hour: 0.012,
-            data_transfer_per_gb: 0.01, // First 1TB free
+            data_transfer_per_gb: 0.01,        // First 1TB free
             cluster_management_per_hour: 0.00, // DOKS is free
         }
     }
@@ -194,8 +194,8 @@ impl CostEstimator {
             cpu_per_hour: 0.02, // Estimated hardware amortization
             memory_per_gb_hour: 0.002,
             storage_per_gb_month: 0.05,
-            load_balancer_per_hour: 0.00, // Software load balancer
-            data_transfer_per_gb: 0.00, // Internal network
+            load_balancer_per_hour: 0.00,      // Software load balancer
+            data_transfer_per_gb: 0.00,        // Internal network
             cluster_management_per_hour: 0.02, // Admin overhead
         }
     }
@@ -206,8 +206,10 @@ impl CostEstimator {
         let networking_costs = self.calculate_networking_costs(analysis).await?;
         let additional_costs = self.calculate_additional_services_costs(analysis).await?;
 
-        let total_monthly_cost = compute_costs.total + storage_costs.total
-            + networking_costs.total + additional_costs.total;
+        let total_monthly_cost = compute_costs.total
+            + storage_costs.total
+            + networking_costs.total
+            + additional_costs.total;
 
         let breakdown = CostBreakdown {
             compute: compute_costs,
@@ -216,7 +218,9 @@ impl CostEstimator {
             additional_services: additional_costs,
         };
 
-        let recommendations = self.generate_cost_recommendations(analysis, &breakdown).await?;
+        let recommendations = self
+            .generate_cost_recommendations(analysis, &breakdown)
+            .await?;
 
         Ok(CostEstimate {
             total_monthly_cost,
@@ -228,7 +232,10 @@ impl CostEstimator {
         })
     }
 
-    async fn calculate_compute_costs(&self, analysis: &DockerComposeAnalysis) -> Result<ComputeCosts> {
+    async fn calculate_compute_costs(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<ComputeCosts> {
         let mut service_costs = Vec::new();
         let mut total_compute_cost = 0.0;
 
@@ -239,10 +246,18 @@ impl CostEstimator {
         }
 
         // Add load balancer costs
-        let load_balancer_count = analysis.services.iter()
-            .filter(|s| matches!(s.service_type, ServiceType::WebApp | ServiceType::LoadBalancer))
+        let load_balancer_count = analysis
+            .services
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.service_type,
+                    ServiceType::WebApp | ServiceType::LoadBalancer
+                )
+            })
             .count();
-        let load_balancer_cost = load_balancer_count as f64 * self.pricing_data.load_balancer_per_hour * 24.0 * 30.0;
+        let load_balancer_cost =
+            load_balancer_count as f64 * self.pricing_data.load_balancer_per_hour * 24.0 * 30.0;
 
         // Add cluster management cost
         let cluster_management_cost = self.pricing_data.cluster_management_per_hour * 24.0 * 30.0;
@@ -262,7 +277,8 @@ impl CostEstimator {
         let (cpu_cores, memory_gb, replicas) = self.estimate_service_resources(service);
 
         let cpu_cost = cpu_cores * self.pricing_data.cpu_per_hour * 24.0 * 30.0 * replicas as f64;
-        let memory_cost = memory_gb * self.pricing_data.memory_per_gb_hour * 24.0 * 30.0 * replicas as f64;
+        let memory_cost =
+            memory_gb * self.pricing_data.memory_per_gb_hour * 24.0 * 30.0 * replicas as f64;
         let monthly_cost = cpu_cost + memory_cost;
 
         Ok(ServiceCost {
@@ -317,7 +333,11 @@ impl CostEstimator {
 
     pub fn parse_cpu_limit(&self, cpu_str: &str) -> Option<f64> {
         if cpu_str.ends_with('m') {
-            cpu_str.trim_end_matches('m').parse::<f64>().ok().map(|m| m / 1000.0)
+            cpu_str
+                .trim_end_matches('m')
+                .parse::<f64>()
+                .ok()
+                .map(|m| m / 1000.0)
         } else {
             cpu_str.parse::<f64>().ok()
         }
@@ -327,22 +347,39 @@ impl CostEstimator {
         if memory_str.ends_with("Gi") {
             memory_str.trim_end_matches("Gi").parse::<f64>().ok()
         } else if memory_str.ends_with("Mi") {
-            memory_str.trim_end_matches("Mi").parse::<f64>().ok().map(|m| m / 1024.0)
+            memory_str
+                .trim_end_matches("Mi")
+                .parse::<f64>()
+                .ok()
+                .map(|m| m / 1024.0)
         } else if memory_str.ends_with("G") {
             memory_str.trim_end_matches("G").parse::<f64>().ok()
         } else if memory_str.ends_with("M") {
-            memory_str.trim_end_matches("M").parse::<f64>().ok().map(|m| m / 1024.0)
+            memory_str
+                .trim_end_matches("M")
+                .parse::<f64>()
+                .ok()
+                .map(|m| m / 1024.0)
         } else {
-            memory_str.parse::<f64>().ok().map(|b| b / (1024.0 * 1024.0 * 1024.0))
+            memory_str
+                .parse::<f64>()
+                .ok()
+                .map(|b| b / (1024.0 * 1024.0 * 1024.0))
         }
     }
 
-    async fn calculate_storage_costs(&self, analysis: &DockerComposeAnalysis) -> Result<StorageCosts> {
+    async fn calculate_storage_costs(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<StorageCosts> {
         let mut total_storage_gb = 0.0;
 
         // Calculate storage for databases and persistent services
         for service in &analysis.services {
-            if matches!(service.service_type, ServiceType::Database | ServiceType::Storage) {
+            if matches!(
+                service.service_type,
+                ServiceType::Database | ServiceType::Storage
+            ) {
                 total_storage_gb += match service.service_type {
                     ServiceType::Database => 50.0, // Default 50GB for database
                     ServiceType::Storage => 100.0, // Default 100GB for storage
@@ -368,9 +405,14 @@ impl CostEstimator {
         })
     }
 
-    async fn calculate_networking_costs(&self, analysis: &DockerComposeAnalysis) -> Result<NetworkingCosts> {
+    async fn calculate_networking_costs(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<NetworkingCosts> {
         // Estimate data transfer based on service types
-        let web_services = analysis.services.iter()
+        let web_services = analysis
+            .services
+            .iter()
             .filter(|s| matches!(s.service_type, ServiceType::WebApp))
             .count();
 
@@ -378,7 +420,11 @@ impl CostEstimator {
         let data_transfer = estimated_data_transfer_gb * self.pricing_data.data_transfer_per_gb;
 
         let load_balancer = self.pricing_data.load_balancer_per_hour * 24.0 * 30.0;
-        let nat_gateway = if matches!(self.provider, CloudProvider::AWS) { 45.0 } else { 0.0 };
+        let nat_gateway = if matches!(self.provider, CloudProvider::AWS) {
+            45.0
+        } else {
+            0.0
+        };
 
         let total = data_transfer + load_balancer + nat_gateway;
 
@@ -390,16 +436,26 @@ impl CostEstimator {
         })
     }
 
-    async fn calculate_additional_services_costs(&self, analysis: &DockerComposeAnalysis) -> Result<AdditionalServicesCosts> {
+    async fn calculate_additional_services_costs(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<AdditionalServicesCosts> {
         let service_count = analysis.services.len() as f64;
 
         // Estimate additional service costs
         let monitoring = service_count * 5.0; // $5 per service for monitoring
         let logging = service_count * 3.0; // $3 per service for logging
-        let secrets_management = if analysis.secrets.is_empty() { 0.0 } else { 10.0 };
-        let backup_services = analysis.services.iter()
+        let secrets_management = if analysis.secrets.is_empty() {
+            0.0
+        } else {
+            10.0
+        };
+        let backup_services = analysis
+            .services
+            .iter()
             .filter(|s| matches!(s.service_type, ServiceType::Database))
-            .count() as f64 * 20.0; // $20 per database for backup services
+            .count() as f64
+            * 20.0; // $20 per database for backup services
 
         let total = monitoring + logging + secrets_management + backup_services;
 
@@ -412,38 +468,51 @@ impl CostEstimator {
         })
     }
 
-    async fn generate_cost_recommendations(&self, analysis: &DockerComposeAnalysis, breakdown: &CostBreakdown) -> Result<Vec<CostRecommendation>> {
+    async fn generate_cost_recommendations(
+        &self,
+        analysis: &DockerComposeAnalysis,
+        breakdown: &CostBreakdown,
+    ) -> Result<Vec<CostRecommendation>> {
         let mut recommendations = Vec::new();
 
         // Right-sizing recommendations
         if breakdown.compute.total > 200.0 {
             recommendations.push(CostRecommendation {
                 recommendation_type: RecommendationType::RightSizing,
-                description: "Consider right-sizing your instances. Many services may be over-provisioned.".to_string(),
+                description:
+                    "Consider right-sizing your instances. Many services may be over-provisioned."
+                        .to_string(),
                 potential_savings: breakdown.compute.total * 0.2,
                 effort_level: EffortLevel::Medium,
             });
         }
 
         // Spot instances recommendation
-        if matches!(self.provider, CloudProvider::AWS | CloudProvider::GCP | CloudProvider::Azure) {
+        if matches!(
+            self.provider,
+            CloudProvider::AWS | CloudProvider::GCP | CloudProvider::Azure
+        ) {
             recommendations.push(CostRecommendation {
                 recommendation_type: RecommendationType::SpotInstances,
-                description: "Use spot/preemptible instances for non-critical workloads.".to_string(),
+                description: "Use spot/preemptible instances for non-critical workloads."
+                    .to_string(),
                 potential_savings: breakdown.compute.total * 0.6,
                 effort_level: EffortLevel::High,
             });
         }
 
         // Auto-scaling recommendations
-        let scalable_services = analysis.services.iter()
+        let scalable_services = analysis
+            .services
+            .iter()
             .filter(|s| s.scaling_hints.horizontal_scaling)
             .count();
 
         if scalable_services > 0 {
             recommendations.push(CostRecommendation {
                 recommendation_type: RecommendationType::AutoScaling,
-                description: "Implement horizontal pod autoscaling to optimize resource usage.".to_string(),
+                description: "Implement horizontal pod autoscaling to optimize resource usage."
+                    .to_string(),
                 potential_savings: breakdown.compute.total * 0.15,
                 effort_level: EffortLevel::Low,
             });
@@ -453,14 +522,17 @@ impl CostEstimator {
         if breakdown.storage.total > 50.0 {
             recommendations.push(CostRecommendation {
                 recommendation_type: RecommendationType::StorageOptimization,
-                description: "Consider using different storage tiers for different data types.".to_string(),
+                description: "Consider using different storage tiers for different data types."
+                    .to_string(),
                 potential_savings: breakdown.storage.total * 0.3,
                 effort_level: EffortLevel::Medium,
             });
         }
 
         // Reserved instances for stable workloads
-        let database_services = analysis.services.iter()
+        let database_services = analysis
+            .services
+            .iter()
             .filter(|s| matches!(s.service_type, ServiceType::Database))
             .count();
 
@@ -478,63 +550,125 @@ impl CostEstimator {
 
     pub fn print_cost_breakdown(&self, estimate: &CostEstimate) -> Result<()> {
         println!("{}", "💰 Cost Estimation".bold().yellow());
-        println!("Provider: {} ({})", estimate.provider.cyan(), estimate.region.dimmed());
+        println!(
+            "Provider: {} ({})",
+            estimate.provider.cyan(),
+            estimate.region.dimmed()
+        );
         println!("Currency: {}", estimate.currency.green());
         println!();
 
-        println!("{}", format!("Total Monthly Cost: ${:.2}", estimate.total_monthly_cost).bold().green());
+        println!(
+            "{}",
+            format!("Total Monthly Cost: ${:.2}", estimate.total_monthly_cost)
+                .bold()
+                .green()
+        );
         println!();
 
         // Compute costs
         println!("{}", "🖥️  Compute Costs".bold().blue());
-        println!("  Cluster Management: ${:.2}", estimate.breakdown.compute.cluster_management);
-        println!("  Load Balancers: ${:.2}", estimate.breakdown.compute.load_balancers);
+        println!(
+            "  Cluster Management: ${:.2}",
+            estimate.breakdown.compute.cluster_management
+        );
+        println!(
+            "  Load Balancers: ${:.2}",
+            estimate.breakdown.compute.load_balancers
+        );
 
         for service in &estimate.breakdown.compute.services {
-            println!("  {} ({:?}): ${:.2} ({} replicas)",
+            println!(
+                "  {} ({:?}): ${:.2} ({} replicas)",
                 service.service_name.cyan(),
                 service.service_type,
                 service.monthly_cost,
                 service.replicas
             );
         }
-        println!("  {}: ${:.2}", "Subtotal".bold(), estimate.breakdown.compute.total);
+        println!(
+            "  {}: ${:.2}",
+            "Subtotal".bold(),
+            estimate.breakdown.compute.total
+        );
         println!();
 
         // Storage costs
         if estimate.breakdown.storage.total > 0.0 {
             println!("{}", "💾 Storage Costs".bold().blue());
-            println!("  Persistent Volumes: ${:.2}", estimate.breakdown.storage.persistent_volumes);
-            println!("  Backup Storage: ${:.2}", estimate.breakdown.storage.backup_storage);
-            println!("  Container Registry: ${:.2}", estimate.breakdown.storage.container_registry);
-            println!("  {}: ${:.2}", "Subtotal".bold(), estimate.breakdown.storage.total);
+            println!(
+                "  Persistent Volumes: ${:.2}",
+                estimate.breakdown.storage.persistent_volumes
+            );
+            println!(
+                "  Backup Storage: ${:.2}",
+                estimate.breakdown.storage.backup_storage
+            );
+            println!(
+                "  Container Registry: ${:.2}",
+                estimate.breakdown.storage.container_registry
+            );
+            println!(
+                "  {}: ${:.2}",
+                "Subtotal".bold(),
+                estimate.breakdown.storage.total
+            );
             println!();
         }
 
         // Networking costs
         if estimate.breakdown.networking.total > 0.0 {
             println!("{}", "🌐 Networking Costs".bold().blue());
-            println!("  Data Transfer: ${:.2}", estimate.breakdown.networking.data_transfer);
-            println!("  Load Balancer: ${:.2}", estimate.breakdown.networking.load_balancer);
+            println!(
+                "  Data Transfer: ${:.2}",
+                estimate.breakdown.networking.data_transfer
+            );
+            println!(
+                "  Load Balancer: ${:.2}",
+                estimate.breakdown.networking.load_balancer
+            );
             if estimate.breakdown.networking.nat_gateway > 0.0 {
-                println!("  NAT Gateway: ${:.2}", estimate.breakdown.networking.nat_gateway);
+                println!(
+                    "  NAT Gateway: ${:.2}",
+                    estimate.breakdown.networking.nat_gateway
+                );
             }
-            println!("  {}: ${:.2}", "Subtotal".bold(), estimate.breakdown.networking.total);
+            println!(
+                "  {}: ${:.2}",
+                "Subtotal".bold(),
+                estimate.breakdown.networking.total
+            );
             println!();
         }
 
         // Additional services
         if estimate.breakdown.additional_services.total > 0.0 {
             println!("{}", "🔧 Additional Services".bold().blue());
-            println!("  Monitoring: ${:.2}", estimate.breakdown.additional_services.monitoring);
-            println!("  Logging: ${:.2}", estimate.breakdown.additional_services.logging);
+            println!(
+                "  Monitoring: ${:.2}",
+                estimate.breakdown.additional_services.monitoring
+            );
+            println!(
+                "  Logging: ${:.2}",
+                estimate.breakdown.additional_services.logging
+            );
             if estimate.breakdown.additional_services.secrets_management > 0.0 {
-                println!("  Secrets Management: ${:.2}", estimate.breakdown.additional_services.secrets_management);
+                println!(
+                    "  Secrets Management: ${:.2}",
+                    estimate.breakdown.additional_services.secrets_management
+                );
             }
             if estimate.breakdown.additional_services.backup_services > 0.0 {
-                println!("  Backup Services: ${:.2}", estimate.breakdown.additional_services.backup_services);
+                println!(
+                    "  Backup Services: ${:.2}",
+                    estimate.breakdown.additional_services.backup_services
+                );
             }
-            println!("  {}: ${:.2}", "Subtotal".bold(), estimate.breakdown.additional_services.total);
+            println!(
+                "  {}: ${:.2}",
+                "Subtotal".bold(),
+                estimate.breakdown.additional_services.total
+            );
             println!();
         }
 
@@ -542,12 +676,16 @@ impl CostEstimator {
         if !estimate.recommendations.is_empty() {
             println!("{}", "💡 Cost Optimization Recommendations".bold().yellow());
             for (i, rec) in estimate.recommendations.iter().enumerate() {
-                println!("{}. {} ({:?} effort)",
+                println!(
+                    "{}. {} ({:?} effort)",
                     i + 1,
                     rec.description.white(),
                     rec.effort_level
                 );
-                println!("   Potential savings: ${:.2}/month", rec.potential_savings.to_string().green());
+                println!(
+                    "   Potential savings: ${:.2}/month",
+                    rec.potential_savings.to_string().green()
+                );
                 println!();
             }
         }

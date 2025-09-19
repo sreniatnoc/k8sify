@@ -225,7 +225,8 @@ impl K8sify {
         &self,
         analysis: &DockerComposeAnalysis,
     ) -> anyhow::Result<CostEstimate> {
-        let cost_estimator = CostEstimator::new(&self.config.default_provider, &self.config.default_region);
+        let cost_estimator =
+            CostEstimator::new(&self.config.default_provider, &self.config.default_region);
         cost_estimator.estimate_costs(analysis).await
     }
 
@@ -234,7 +235,9 @@ impl K8sify {
         &self,
         manifest_dir: P,
     ) -> anyhow::Result<ValidationResults> {
-        self.validator.validate_directory(manifest_dir.as_ref()).await
+        self.validator
+            .validate_directory(manifest_dir.as_ref())
+            .await
     }
 
     /// Save manifests to disk
@@ -243,7 +246,9 @@ impl K8sify {
         manifests: &KubernetesManifests,
         output_dir: P,
     ) -> anyhow::Result<()> {
-        self.converter.save_manifests(manifests, output_dir.as_ref()).await
+        self.converter
+            .save_manifests(manifests, output_dir.as_ref())
+            .await
     }
 
     /// Full conversion pipeline
@@ -310,7 +315,9 @@ services:
         fs::write(&compose_file, compose_content).await?;
 
         let k8sify = K8sify::new();
-        let manifests = k8sify.convert_file(&compose_file, None::<&std::path::PathBuf>).await?;
+        let manifests = k8sify
+            .convert_file(&compose_file, None::<&std::path::PathBuf>)
+            .await?;
 
         assert_eq!(manifests.deployments.len(), 1);
         assert_eq!(manifests.services.len(), 1);

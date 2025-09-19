@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use crate::analyzer::{DockerComposeAnalyzer, DockerComposeAnalysis};
+use crate::analyzer::{DockerComposeAnalysis, DockerComposeAnalyzer};
 use crate::converter::{KubernetesConverter, KubernetesManifests};
 use crate::cost::CostEstimator;
 use crate::patterns::PatternDetector;
@@ -138,14 +138,17 @@ impl InteractiveWizard {
         }
 
         let manifests = if config.deployment_target == DeploymentTarget::Production {
-            self.converter.convert_with_production_patterns(&analysis, &patterns).await?
+            self.converter
+                .convert_with_production_patterns(&analysis, &patterns)
+                .await?
         } else {
             self.converter.convert_basic(&analysis).await?
         };
 
         self.review_manifests(&config, &manifests).await?;
 
-        self.save_configuration_and_manifests(&config, &manifests).await?;
+        self.save_configuration_and_manifests(&config, &manifests)
+            .await?;
 
         self.print_completion_message(&config);
 
@@ -153,7 +156,10 @@ impl InteractiveWizard {
     }
 
     fn print_welcome(&self) {
-        println!("{}", "🧙 Welcome to K8sify Interactive Wizard!".bold().blue());
+        println!(
+            "{}",
+            "🧙 Welcome to K8sify Interactive Wizard!".bold().blue()
+        );
         println!("{}", "This wizard will guide you through converting your Docker Compose application to Kubernetes.".white());
         println!();
     }
@@ -195,7 +201,10 @@ impl InteractiveWizard {
 
         // Validate file exists
         if !config.docker_compose_path.exists() {
-            return Err(anyhow::anyhow!("Docker Compose file not found: {:?}", config.docker_compose_path));
+            return Err(anyhow::anyhow!(
+                "Docker Compose file not found: {:?}",
+                config.docker_compose_path
+            ));
         }
 
         // Step 2: Output directory
@@ -222,7 +231,12 @@ impl InteractiveWizard {
         };
 
         // Step 4: Environment type
-        let env_options = vec!["Local (minikube, kind)", "Cloud (EKS, GKE, AKS)", "On-Premise", "Hybrid"];
+        let env_options = vec![
+            "Local (minikube, kind)",
+            "Cloud (EKS, GKE, AKS)",
+            "On-Premise",
+            "Hybrid",
+        ];
         let env_selection = Select::new()
             .with_prompt("🌍 What type of Kubernetes environment?")
             .default(0)
@@ -238,8 +252,16 @@ impl InteractiveWizard {
         };
 
         // Step 5: Cloud provider (if cloud environment)
-        if matches!(config.environment_type, EnvironmentType::Cloud | EnvironmentType::Hybrid) {
-            let provider_options = vec!["AWS (EKS)", "Google Cloud (GKE)", "Azure (AKS)", "DigitalOcean"];
+        if matches!(
+            config.environment_type,
+            EnvironmentType::Cloud | EnvironmentType::Hybrid
+        ) {
+            let provider_options = vec![
+                "AWS (EKS)",
+                "Google Cloud (GKE)",
+                "Azure (AKS)",
+                "DigitalOcean",
+            ];
             let provider_selection = Select::new()
                 .with_prompt("☁️ Which cloud provider?")
                 .default(0)
@@ -256,7 +278,10 @@ impl InteractiveWizard {
         }
 
         // Step 6: Scaling preferences
-        if matches!(config.deployment_target, DeploymentTarget::Staging | DeploymentTarget::Production) {
+        if matches!(
+            config.deployment_target,
+            DeploymentTarget::Staging | DeploymentTarget::Production
+        ) {
             config.scaling_preferences.enable_autoscaling = Confirm::new()
                 .with_prompt("📈 Enable horizontal pod autoscaling?")
                 .default(true)
@@ -285,7 +310,7 @@ impl InteractiveWizard {
             "Basic (default security)",
             "Enhanced (network policies, secrets)",
             "Strict (Pod Security Standards, RBAC)",
-            "Custom (I'll configure manually)"
+            "Custom (I'll configure manually)",
         ];
         let security_selection = Select::new()
             .with_prompt("🔒 Security level")
@@ -304,17 +329,26 @@ impl InteractiveWizard {
         // Step 8: Additional features
         config.monitoring_enabled = Confirm::new()
             .with_prompt("📊 Enable monitoring and observability?")
-            .default(matches!(config.deployment_target, DeploymentTarget::Production))
+            .default(matches!(
+                config.deployment_target,
+                DeploymentTarget::Production
+            ))
             .interact()?;
 
         config.backup_enabled = Confirm::new()
             .with_prompt("💾 Enable automated backups?")
-            .default(matches!(config.deployment_target, DeploymentTarget::Production))
+            .default(matches!(
+                config.deployment_target,
+                DeploymentTarget::Production
+            ))
             .interact()?;
 
         config.ssl_enabled = Confirm::new()
             .with_prompt("🔐 Enable SSL/TLS certificates?")
-            .default(matches!(config.deployment_target, DeploymentTarget::Staging | DeploymentTarget::Production))
+            .default(matches!(
+                config.deployment_target,
+                DeploymentTarget::Staging | DeploymentTarget::Production
+            ))
             .interact()?;
 
         config.ingress_enabled = Confirm::new()
@@ -338,7 +372,7 @@ impl InteractiveWizard {
             "Minimal (cost-optimized)",
             "Standard (balanced)",
             "Performance (high-performance)",
-            "Enterprise (maximum availability)"
+            "Enterprise (maximum availability)",
         ];
         let budget_selection = Select::new()
             .with_prompt("💰 Resource budget level")
@@ -363,7 +397,7 @@ impl InteractiveWizard {
                 "GitOps (ArgoCD)",
                 "Secret Management (External Secrets)",
                 "Multi-Cluster Support",
-                "Edge Computing Support"
+                "Edge Computing Support",
             ];
 
             let advanced_selections = MultiSelect::new()
@@ -394,7 +428,10 @@ impl InteractiveWizard {
         println!("Services: {}", analysis.services.len().to_string().yellow());
         println!("Volumes: {}", analysis.volumes.len().to_string().yellow());
         println!("Networks: {}", analysis.networks.len().to_string().yellow());
-        println!("Complexity Score: {}", analysis.complexity_score.to_string().red());
+        println!(
+            "Complexity Score: {}",
+            analysis.complexity_score.to_string().red()
+        );
         println!();
 
         Ok(())
@@ -404,7 +441,8 @@ impl InteractiveWizard {
         if !patterns.is_empty() {
             println!("{}", "🔍 Detected Patterns".bold().green());
             for pattern in patterns {
-                println!("  {} {:?} (confidence: {:.1}%)",
+                println!(
+                    "  {} {:?} (confidence: {:.1}%)",
                     "•".blue(),
                     pattern.pattern_type,
                     pattern.confidence * 100.0
@@ -424,19 +462,28 @@ impl InteractiveWizard {
     }
 
     fn should_perform_security_scan(&self, config: &WizardConfiguration) -> bool {
-        !matches!(config.security_level, SecurityLevel::Basic) ||
-        matches!(config.deployment_target, DeploymentTarget::Production)
+        !matches!(config.security_level, SecurityLevel::Basic)
+            || matches!(config.deployment_target, DeploymentTarget::Production)
     }
 
     fn should_estimate_costs(&self, config: &WizardConfiguration) -> bool {
-        matches!(config.environment_type, EnvironmentType::Cloud | EnvironmentType::Hybrid)
+        matches!(
+            config.environment_type,
+            EnvironmentType::Cloud | EnvironmentType::Hybrid
+        )
     }
 
-    async fn estimate_and_display_costs(&self, config: &WizardConfiguration, analysis: &DockerComposeAnalysis) -> Result<()> {
+    async fn estimate_and_display_costs(
+        &self,
+        config: &WizardConfiguration,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<()> {
         let progress = ProgressBar::new_spinner();
-        progress.set_style(ProgressStyle::default_spinner()
-            .template("{spinner:.blue} {msg}")
-            .unwrap());
+        progress.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.blue} {msg}")
+                .unwrap(),
+        );
         progress.set_message("Estimating costs...");
         progress.enable_steady_tick(Duration::from_millis(100));
 
@@ -463,13 +510,42 @@ impl InteractiveWizard {
     pub async fn review_conversion(&self, manifests: &KubernetesManifests) -> Result<()> {
         println!("{}", "📋 Conversion Review".bold().blue());
         println!("Generated manifests:");
-        println!("  Deployments: {}", manifests.deployments.len().to_string().yellow());
-        println!("  Services: {}", manifests.services.len().to_string().yellow());
-        println!("  ConfigMaps: {}", manifests.config_maps.len().to_string().yellow());
-        println!("  Secrets: {}", manifests.secrets.len().to_string().yellow());
-        println!("  PVCs: {}", manifests.persistent_volume_claims.len().to_string().yellow());
-        println!("  Ingress: {}", manifests.ingress.len().to_string().yellow());
-        println!("  HPAs: {}", manifests.horizontal_pod_autoscalers.len().to_string().yellow());
+        println!(
+            "  Deployments: {}",
+            manifests.deployments.len().to_string().yellow()
+        );
+        println!(
+            "  Services: {}",
+            manifests.services.len().to_string().yellow()
+        );
+        println!(
+            "  ConfigMaps: {}",
+            manifests.config_maps.len().to_string().yellow()
+        );
+        println!(
+            "  Secrets: {}",
+            manifests.secrets.len().to_string().yellow()
+        );
+        println!(
+            "  PVCs: {}",
+            manifests
+                .persistent_volume_claims
+                .len()
+                .to_string()
+                .yellow()
+        );
+        println!(
+            "  Ingress: {}",
+            manifests.ingress.len().to_string().yellow()
+        );
+        println!(
+            "  HPAs: {}",
+            manifests
+                .horizontal_pod_autoscalers
+                .len()
+                .to_string()
+                .yellow()
+        );
         println!();
 
         let proceed = Confirm::new()
@@ -484,7 +560,11 @@ impl InteractiveWizard {
         Ok(())
     }
 
-    async fn review_manifests(&self, config: &WizardConfiguration, manifests: &KubernetesManifests) -> Result<()> {
+    async fn review_manifests(
+        &self,
+        config: &WizardConfiguration,
+        manifests: &KubernetesManifests,
+    ) -> Result<()> {
         println!("{}", "📋 Generated Manifests Review".bold().blue());
 
         // Show summary
@@ -495,28 +575,44 @@ impl InteractiveWizard {
 
         println!("Manifests to be created:");
         if !manifests.deployments.is_empty() {
-            println!("  📦 Deployments: {}", manifests.deployments.len().to_string().yellow());
+            println!(
+                "  📦 Deployments: {}",
+                manifests.deployments.len().to_string().yellow()
+            );
             for deployment in &manifests.deployments {
                 println!("    - {}", deployment.name.cyan());
             }
         }
 
         if !manifests.services.is_empty() {
-            println!("  🌐 Services: {}", manifests.services.len().to_string().yellow());
+            println!(
+                "  🌐 Services: {}",
+                manifests.services.len().to_string().yellow()
+            );
             for service in &manifests.services {
                 println!("    - {}", service.name.cyan());
             }
         }
 
         if !manifests.ingress.is_empty() {
-            println!("  🚪 Ingress: {}", manifests.ingress.len().to_string().yellow());
+            println!(
+                "  🚪 Ingress: {}",
+                manifests.ingress.len().to_string().yellow()
+            );
             for ingress in &manifests.ingress {
                 println!("    - {} ({})", ingress.name.cyan(), ingress.host.green());
             }
         }
 
         if !manifests.horizontal_pod_autoscalers.is_empty() {
-            println!("  📈 HPAs: {}", manifests.horizontal_pod_autoscalers.len().to_string().yellow());
+            println!(
+                "  📈 HPAs: {}",
+                manifests
+                    .horizontal_pod_autoscalers
+                    .len()
+                    .to_string()
+                    .yellow()
+            );
         }
 
         println!();
@@ -533,21 +629,30 @@ impl InteractiveWizard {
         Ok(())
     }
 
-    async fn save_configuration_and_manifests(&self, config: &WizardConfiguration, manifests: &KubernetesManifests) -> Result<()> {
+    async fn save_configuration_and_manifests(
+        &self,
+        config: &WizardConfiguration,
+        manifests: &KubernetesManifests,
+    ) -> Result<()> {
         let progress = ProgressBar::new_spinner();
-        progress.set_style(ProgressStyle::default_spinner()
-            .template("{spinner:.green} {msg}")
-            .unwrap());
+        progress.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.green} {msg}")
+                .unwrap(),
+        );
         progress.set_message("Saving manifests...");
         progress.enable_steady_tick(Duration::from_millis(100));
 
         // Save manifests
-        self.converter.save_manifests(manifests, &config.output_directory).await?;
+        self.converter
+            .save_manifests(manifests, &config.output_directory)
+            .await?;
 
         // Save configuration
         let config_path = config.output_directory.join("k8sify-config.json");
         let config_json = serde_json::to_string_pretty(config)?;
-        tokio::fs::write(&config_path, config_json).await
+        tokio::fs::write(&config_path, config_json)
+            .await
             .context("Failed to save configuration")?;
 
         progress.finish_and_clear();
@@ -558,12 +663,21 @@ impl InteractiveWizard {
     fn print_completion_message(&self, config: &WizardConfiguration) {
         println!("{}", "✅ Conversion Complete!".bold().green());
         println!();
-        println!("Your Kubernetes manifests have been saved to: {}", config.output_directory.display().to_string().cyan());
+        println!(
+            "Your Kubernetes manifests have been saved to: {}",
+            config.output_directory.display().to_string().cyan()
+        );
         println!();
         println!("{}", "Next steps:".bold().white());
-        println!("1. Review the generated manifests in {}", config.output_directory.display().to_string().cyan());
+        println!(
+            "1. Review the generated manifests in {}",
+            config.output_directory.display().to_string().cyan()
+        );
         println!("2. Apply them to your Kubernetes cluster:");
-        println!("   {}", format!("kubectl apply -f {}", config.output_directory.display()).yellow());
+        println!(
+            "   {}",
+            format!("kubectl apply -f {}", config.output_directory.display()).yellow()
+        );
         println!("3. Monitor your deployments:");
         println!("   {}", "kubectl get pods,services,ingress".yellow());
         println!();
@@ -580,6 +694,9 @@ impl InteractiveWizard {
             println!();
         }
 
-        println!("{}", "💡 Need help? Check out the documentation or run 'k8sify --help'".dimmed());
+        println!(
+            "{}",
+            "💡 Need help? Check out the documentation or run 'k8sify --help'".dimmed()
+        );
     }
 }

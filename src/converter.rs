@@ -1,12 +1,14 @@
 use anyhow::{Context, Result};
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::path::Path;
 use tokio::fs;
 
-use crate::analyzer::{DockerComposeAnalysis, ServiceAnalysis, ServiceType, VolumeMount, VolumeMountType};
+use crate::analyzer::{
+    DockerComposeAnalysis, ServiceAnalysis, ServiceType, VolumeMount, VolumeMountType,
+};
 use crate::patterns::{DetectedPattern, ProductionPattern};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,20 +91,41 @@ impl KubernetesConverter {
         let mut handlebars = Handlebars::new();
 
         // Register templates
-        handlebars.register_template_string("deployment", DEPLOYMENT_TEMPLATE).unwrap();
-        handlebars.register_template_string("service", SERVICE_TEMPLATE).unwrap();
-        handlebars.register_template_string("configmap", CONFIGMAP_TEMPLATE).unwrap();
-        handlebars.register_template_string("secret", SECRET_TEMPLATE).unwrap();
-        handlebars.register_template_string("pvc", PVC_TEMPLATE).unwrap();
-        handlebars.register_template_string("ingress", INGRESS_TEMPLATE).unwrap();
-        handlebars.register_template_string("hpa", HPA_TEMPLATE).unwrap();
-        handlebars.register_template_string("network_policy", NETWORK_POLICY_TEMPLATE).unwrap();
-        handlebars.register_template_string("service_monitor", SERVICE_MONITOR_TEMPLATE).unwrap();
+        handlebars
+            .register_template_string("deployment", DEPLOYMENT_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("service", SERVICE_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("configmap", CONFIGMAP_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("secret", SECRET_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("pvc", PVC_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("ingress", INGRESS_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("hpa", HPA_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("network_policy", NETWORK_POLICY_TEMPLATE)
+            .unwrap();
+        handlebars
+            .register_template_string("service_monitor", SERVICE_MONITOR_TEMPLATE)
+            .unwrap();
 
         Self { handlebars }
     }
 
-    pub async fn convert_basic(&self, analysis: &DockerComposeAnalysis) -> Result<KubernetesManifests> {
+    pub async fn convert_basic(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<KubernetesManifests> {
         let mut manifests = KubernetesManifests {
             deployments: Vec::new(),
             services: Vec::new(),
@@ -155,19 +178,24 @@ impl KubernetesConverter {
         for pattern in patterns {
             match &pattern.production_pattern {
                 ProductionPattern::WebAppPattern(web_pattern) => {
-                    self.apply_web_app_pattern(&mut manifests, analysis, web_pattern).await?;
+                    self.apply_web_app_pattern(&mut manifests, analysis, web_pattern)
+                        .await?;
                 }
                 ProductionPattern::DatabasePattern(db_pattern) => {
-                    self.apply_database_pattern(&mut manifests, analysis, db_pattern).await?;
+                    self.apply_database_pattern(&mut manifests, analysis, db_pattern)
+                        .await?;
                 }
                 ProductionPattern::CachePattern(cache_pattern) => {
-                    self.apply_cache_pattern(&mut manifests, analysis, cache_pattern).await?;
+                    self.apply_cache_pattern(&mut manifests, analysis, cache_pattern)
+                        .await?;
                 }
                 ProductionPattern::MessageQueuePattern(mq_pattern) => {
-                    self.apply_message_queue_pattern(&mut manifests, analysis, mq_pattern).await?;
+                    self.apply_message_queue_pattern(&mut manifests, analysis, mq_pattern)
+                        .await?;
                 }
                 ProductionPattern::LoadBalancerPattern(lb_pattern) => {
-                    self.apply_load_balancer_pattern(&mut manifests, analysis, lb_pattern).await?;
+                    self.apply_load_balancer_pattern(&mut manifests, analysis, lb_pattern)
+                        .await?;
                 }
             }
         }
@@ -175,7 +203,11 @@ impl KubernetesConverter {
         Ok(manifests)
     }
 
-    async fn generate_deployment(&self, service: &ServiceAnalysis, production_mode: bool) -> Result<DeploymentManifest> {
+    async fn generate_deployment(
+        &self,
+        service: &ServiceAnalysis,
+        production_mode: bool,
+    ) -> Result<DeploymentManifest> {
         let mut replicas = 1;
         let mut strategy_type = "RollingUpdate";
 
@@ -206,7 +238,9 @@ impl KubernetesConverter {
             "restart_policy": service.restart_policy,
         });
 
-        let content = self.handlebars.render("deployment", &data)
+        let content = self
+            .handlebars
+            .render("deployment", &data)
             .context("Failed to render deployment template")?;
 
         Ok(DeploymentManifest {
@@ -230,7 +264,9 @@ impl KubernetesConverter {
             "session_affinity": if service.scaling_hints.session_affinity { "ClientIP" } else { "None" }
         });
 
-        let content = self.handlebars.render("service", &data)
+        let content = self
+            .handlebars
+            .render("service", &data)
             .context("Failed to render service template")?;
 
         Ok(ServiceManifest {
@@ -246,7 +282,9 @@ impl KubernetesConverter {
             "environment": service.environment
         });
 
-        let content = self.handlebars.render("configmap", &data)
+        let content = self
+            .handlebars
+            .render("configmap", &data)
             .context("Failed to render configmap template")?;
 
         Ok(ConfigMapManifest {
@@ -255,7 +293,11 @@ impl KubernetesConverter {
         })
     }
 
-    async fn generate_pvc(&self, service: &ServiceAnalysis, volume: &VolumeMount) -> Result<PvcManifest> {
+    async fn generate_pvc(
+        &self,
+        service: &ServiceAnalysis,
+        volume: &VolumeMount,
+    ) -> Result<PvcManifest> {
         let size = match service.service_type {
             ServiceType::Database => "10Gi",
             ServiceType::Storage => "50Gi",
@@ -275,7 +317,9 @@ impl KubernetesConverter {
             "storage_class": "standard"
         });
 
-        let content = self.handlebars.render("pvc", &data)
+        let content = self
+            .handlebars
+            .render("pvc", &data)
             .context("Failed to render pvc template")?;
 
         Ok(PvcManifest {
@@ -374,7 +418,9 @@ impl KubernetesConverter {
             "target_memory": 80
         });
 
-        let content = self.handlebars.render("hpa", &data)
+        let content = self
+            .handlebars
+            .render("hpa", &data)
             .context("Failed to render hpa template")?;
 
         Ok(HpaManifest {
@@ -383,7 +429,11 @@ impl KubernetesConverter {
         })
     }
 
-    async fn generate_ingress(&self, service: &ServiceAnalysis, host: &str) -> Result<IngressManifest> {
+    async fn generate_ingress(
+        &self,
+        service: &ServiceAnalysis,
+        host: &str,
+    ) -> Result<IngressManifest> {
         let data = json!({
             "name": service.name,
             "host": host,
@@ -391,7 +441,9 @@ impl KubernetesConverter {
             "service_port": service.ports.first().map(|p| p.container_port).unwrap_or(80)
         });
 
-        let content = self.handlebars.render("ingress", &data)
+        let content = self
+            .handlebars
+            .render("ingress", &data)
             .context("Failed to render ingress template")?;
 
         Ok(IngressManifest {
@@ -401,13 +453,18 @@ impl KubernetesConverter {
         })
     }
 
-    async fn generate_network_policy(&self, service: &ServiceAnalysis) -> Result<NetworkPolicyManifest> {
+    async fn generate_network_policy(
+        &self,
+        service: &ServiceAnalysis,
+    ) -> Result<NetworkPolicyManifest> {
         let data = json!({
             "name": service.name,
             "namespace": "default"
         });
 
-        let content = self.handlebars.render("network_policy", &data)
+        let content = self
+            .handlebars
+            .render("network_policy", &data)
             .context("Failed to render network policy template")?;
 
         Ok(NetworkPolicyManifest {
@@ -416,14 +473,19 @@ impl KubernetesConverter {
         })
     }
 
-    async fn generate_service_monitor(&self, service: &ServiceAnalysis) -> Result<ServiceMonitorManifest> {
+    async fn generate_service_monitor(
+        &self,
+        service: &ServiceAnalysis,
+    ) -> Result<ServiceMonitorManifest> {
         let data = json!({
             "name": service.name,
             "port": "metrics",
             "path": "/metrics"
         });
 
-        let content = self.handlebars.render("service_monitor", &data)
+        let content = self
+            .handlebars
+            .render("service_monitor", &data)
             .context("Failed to render service monitor template")?;
 
         Ok(ServiceMonitorManifest {
@@ -440,7 +502,9 @@ impl KubernetesConverter {
             "database": general_purpose::STANDARD.encode(&service.name)
         });
 
-        let content = self.handlebars.render("secret", &data)
+        let content = self
+            .handlebars
+            .render("secret", &data)
             .context("Failed to render secret template")?;
 
         Ok(SecretManifest {
@@ -449,71 +513,87 @@ impl KubernetesConverter {
         })
     }
 
-    pub async fn save_manifests(&self, manifests: &KubernetesManifests, output_dir: &Path) -> Result<()> {
-        fs::create_dir_all(output_dir).await
+    pub async fn save_manifests(
+        &self,
+        manifests: &KubernetesManifests,
+        output_dir: &Path,
+    ) -> Result<()> {
+        fs::create_dir_all(output_dir)
+            .await
             .context("Failed to create output directory")?;
 
         // Save deployments
         for deployment in &manifests.deployments {
             let file_path = output_dir.join(format!("{}.yaml", deployment.name));
-            fs::write(&file_path, &deployment.content).await
+            fs::write(&file_path, &deployment.content)
+                .await
                 .context(format!("Failed to write deployment file: {:?}", file_path))?;
         }
 
         // Save services
         for service in &manifests.services {
             let file_path = output_dir.join(format!("{}.yaml", service.name));
-            fs::write(&file_path, &service.content).await
+            fs::write(&file_path, &service.content)
+                .await
                 .context(format!("Failed to write service file: {:?}", file_path))?;
         }
 
         // Save config maps
         for config_map in &manifests.config_maps {
             let file_path = output_dir.join(format!("{}.yaml", config_map.name));
-            fs::write(&file_path, &config_map.content).await
+            fs::write(&file_path, &config_map.content)
+                .await
                 .context(format!("Failed to write configmap file: {:?}", file_path))?;
         }
 
         // Save secrets
         for secret in &manifests.secrets {
             let file_path = output_dir.join(format!("{}.yaml", secret.name));
-            fs::write(&file_path, &secret.content).await
+            fs::write(&file_path, &secret.content)
+                .await
                 .context(format!("Failed to write secret file: {:?}", file_path))?;
         }
 
         // Save PVCs
         for pvc in &manifests.persistent_volume_claims {
             let file_path = output_dir.join(format!("{}.yaml", pvc.name));
-            fs::write(&file_path, &pvc.content).await
+            fs::write(&file_path, &pvc.content)
+                .await
                 .context(format!("Failed to write pvc file: {:?}", file_path))?;
         }
 
         // Save ingress
         for ingress in &manifests.ingress {
             let file_path = output_dir.join(format!("{}.yaml", ingress.name));
-            fs::write(&file_path, &ingress.content).await
+            fs::write(&file_path, &ingress.content)
+                .await
                 .context(format!("Failed to write ingress file: {:?}", file_path))?;
         }
 
         // Save HPAs
         for hpa in &manifests.horizontal_pod_autoscalers {
             let file_path = output_dir.join(format!("{}.yaml", hpa.name));
-            fs::write(&file_path, &hpa.content).await
+            fs::write(&file_path, &hpa.content)
+                .await
                 .context(format!("Failed to write hpa file: {:?}", file_path))?;
         }
 
         // Save network policies
         for np in &manifests.network_policies {
             let file_path = output_dir.join(format!("{}.yaml", np.name));
-            fs::write(&file_path, &np.content).await
-                .context(format!("Failed to write network policy file: {:?}", file_path))?;
+            fs::write(&file_path, &np.content).await.context(format!(
+                "Failed to write network policy file: {:?}",
+                file_path
+            ))?;
         }
 
         // Save service monitors
         for sm in &manifests.service_monitors {
             let file_path = output_dir.join(format!("{}.yaml", sm.name));
-            fs::write(&file_path, &sm.content).await
-                .context(format!("Failed to write service monitor file: {:?}", file_path))?;
+            fs::write(&file_path, &sm.content).await.context(format!(
+                "Failed to write service monitor file: {:?}",
+                file_path
+            ))?;
         }
 
         Ok(())

@@ -11,7 +11,7 @@ fn test_service_type_detection() {
         "nginx:1.20",
         vec![80, 443],
         vec![("PORT", "80")],
-        ServiceType::WebApp
+        ServiceType::WebApp,
     ));
     assert!(web_confidence > 0.7);
 
@@ -20,7 +20,7 @@ fn test_service_type_detection() {
         "postgres:13",
         vec![5432],
         vec![("POSTGRES_DB", "myapp"), ("POSTGRES_USER", "user")],
-        ServiceType::Database
+        ServiceType::Database,
     ));
     assert!(db_confidence > 0.8);
 
@@ -29,7 +29,7 @@ fn test_service_type_detection() {
         "redis:6",
         vec![6379],
         vec![("REDIS_URL", "redis://localhost:6379")],
-        ServiceType::Cache
+        ServiceType::Cache,
     ));
     assert!(cache_confidence > 0.8);
 }
@@ -71,11 +71,16 @@ fn test_security_pattern_detection() {
         ("API_KEY".to_string(), "abc123def456ghi789".to_string()),
     ]);
 
-    let service = create_test_service_with_env("test-app:1.0", vec![], environment, ServiceType::WebApp);
-    let findings = security_scanner.check_environment_secrets(&service).unwrap();
+    let service =
+        create_test_service_with_env("test-app:1.0", vec![], environment, ServiceType::WebApp);
+    let findings = security_scanner
+        .check_environment_secrets(&service)
+        .unwrap();
 
     assert!(!findings.is_empty());
-    assert!(findings.iter().any(|f| matches!(f.severity, Severity::High | Severity::Critical)));
+    assert!(findings
+        .iter()
+        .any(|f| matches!(f.severity, Severity::High | Severity::Critical)));
 }
 
 #[test]
@@ -87,7 +92,9 @@ fn test_port_security_validation() {
     let findings = security_scanner.check_port_security(&service).unwrap();
 
     assert!(!findings.is_empty());
-    assert!(findings.iter().any(|f| matches!(f.severity, Severity::High)));
+    assert!(findings
+        .iter()
+        .any(|f| matches!(f.severity, Severity::High)));
 }
 
 #[test]
@@ -112,7 +119,12 @@ fn test_architectural_pattern_detection() {
     let services = vec![
         create_test_service("nginx:1.20", vec![80], vec![], ServiceType::WebApp),
         create_test_service("node:16", vec![3000], vec![], ServiceType::WebApp),
-        create_test_service("postgres:13", vec![5432], vec![("POSTGRES_DB", "app")], ServiceType::Database),
+        create_test_service(
+            "postgres:13",
+            vec![5432],
+            vec![("POSTGRES_DB", "app")],
+            ServiceType::Database,
+        ),
     ];
 
     let analysis = DockerComposeAnalysis {
@@ -140,7 +152,12 @@ fn test_microservices_detection() {
         create_test_service("nginx:1.20", vec![80], vec![], ServiceType::LoadBalancer),
         create_test_service("user-service:1.0", vec![3001], vec![], ServiceType::WebApp),
         create_test_service("order-service:1.0", vec![3002], vec![], ServiceType::WebApp),
-        create_test_service("payment-service:1.0", vec![3003], vec![], ServiceType::WebApp),
+        create_test_service(
+            "payment-service:1.0",
+            vec![3003],
+            vec![],
+            ServiceType::WebApp,
+        ),
         create_test_service("postgres:13", vec![5432], vec![], ServiceType::Database),
         create_test_service("redis:6", vec![6379], vec![], ServiceType::Cache),
     ];
@@ -181,9 +198,12 @@ fn test_complexity_score_calculation() {
     let analyzer = DockerComposeAnalyzer::new();
 
     // Simple application
-    let simple_services = vec![
-        create_test_service("nginx:1.20", vec![80], vec![], ServiceType::WebApp),
-    ];
+    let simple_services = vec![create_test_service(
+        "nginx:1.20",
+        vec![80],
+        vec![],
+        ServiceType::WebApp,
+    )];
     let simple_score = analyzer.calculate_complexity_score(&simple_services, &vec![], &vec![]);
     assert!(simple_score < 20);
 
@@ -218,7 +238,7 @@ fn test_pattern_confidence_scoring() {
         "nginx:1.20",
         vec![80, 443],
         vec![("PORT", "80"), ("HOST", "0.0.0.0")],
-        ServiceType::WebApp
+        ServiceType::WebApp,
     ));
 
     // Low confidence web app
@@ -226,7 +246,7 @@ fn test_pattern_confidence_scoring() {
         "unknown-image:1.0",
         vec![],
         vec![],
-        ServiceType::Unknown
+        ServiceType::Unknown,
     ));
 
     assert!(high_confidence_web > low_confidence_web);
@@ -239,18 +259,22 @@ fn create_test_service(
     image: &str,
     ports: Vec<u16>,
     env_vars: Vec<(&str, &str)>,
-    service_type: ServiceType
+    service_type: ServiceType,
 ) -> k8sify::analyzer::ServiceAnalysis {
-    use k8sify::analyzer::{ServiceAnalysis, PortMapping, ResourceLimits, ScalingHints};
+    use k8sify::analyzer::{PortMapping, ResourceLimits, ScalingHints, ServiceAnalysis};
 
-    let ports = ports.into_iter().map(|port| PortMapping {
-        host_port: Some(port),
-        container_port: port,
-        protocol: "TCP".to_string(),
-        exposed: false,
-    }).collect();
+    let ports = ports
+        .into_iter()
+        .map(|port| PortMapping {
+            host_port: Some(port),
+            container_port: port,
+            protocol: "TCP".to_string(),
+            exposed: false,
+        })
+        .collect();
 
-    let environment = env_vars.into_iter()
+    let environment = env_vars
+        .into_iter()
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect();
 
@@ -284,16 +308,19 @@ fn create_test_service_with_env(
     image: &str,
     ports: Vec<u16>,
     environment: std::collections::HashMap<String, String>,
-    service_type: ServiceType
+    service_type: ServiceType,
 ) -> k8sify::analyzer::ServiceAnalysis {
-    use k8sify::analyzer::{ServiceAnalysis, PortMapping, ResourceLimits, ScalingHints};
+    use k8sify::analyzer::{PortMapping, ResourceLimits, ScalingHints, ServiceAnalysis};
 
-    let ports = ports.into_iter().map(|port| PortMapping {
-        host_port: Some(port),
-        container_port: port,
-        protocol: "TCP".to_string(),
-        exposed: false,
-    }).collect();
+    let ports = ports
+        .into_iter()
+        .map(|port| PortMapping {
+            host_port: Some(port),
+            container_port: port,
+            protocol: "TCP".to_string(),
+            exposed: false,
+        })
+        .collect();
 
     ServiceAnalysis {
         name: "test-service".to_string(),

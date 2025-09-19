@@ -98,13 +98,38 @@ struct SecurityPatterns {
 impl SecurityScanner {
     pub fn new() -> Self {
         let secret_patterns = vec![
-            (Regex::new(r#"(?i)password\s*=\s*['"]([^'"]{8,})['"]"#).unwrap(), "Password in plaintext".to_string()),
-            (Regex::new(r#"(?i)api[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "API key in plaintext".to_string()),
-            (Regex::new(r#"(?i)secret[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "Secret key in plaintext".to_string()),
-            (Regex::new(r#"(?i)token\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(), "Token in plaintext".to_string()),
-            (Regex::new(r"(?i)private[_-]?key").unwrap(), "Private key reference".to_string()),
-            (Regex::new(r#"(?i)aws[_-]?access[_-]?key[_-]?id\s*=\s*['"]([A-Z0-9]{20})['"]"#).unwrap(), "AWS Access Key".to_string()),
-            (Regex::new(r#"(?i)aws[_-]?secret[_-]?access[_-]?key\s*=\s*['"]([A-Za-z0-9/+=]{40})['"]"#).unwrap(), "AWS Secret Key".to_string()),
+            (
+                Regex::new(r#"(?i)password\s*=\s*['"]([^'"]{8,})['"]"#).unwrap(),
+                "Password in plaintext".to_string(),
+            ),
+            (
+                Regex::new(r#"(?i)api[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(),
+                "API key in plaintext".to_string(),
+            ),
+            (
+                Regex::new(r#"(?i)secret[_-]?key\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(),
+                "Secret key in plaintext".to_string(),
+            ),
+            (
+                Regex::new(r#"(?i)token\s*=\s*['"]([A-Za-z0-9]{20,})['"]"#).unwrap(),
+                "Token in plaintext".to_string(),
+            ),
+            (
+                Regex::new(r"(?i)private[_-]?key").unwrap(),
+                "Private key reference".to_string(),
+            ),
+            (
+                Regex::new(r#"(?i)aws[_-]?access[_-]?key[_-]?id\s*=\s*['"]([A-Z0-9]{20})['"]"#)
+                    .unwrap(),
+                "AWS Access Key".to_string(),
+            ),
+            (
+                Regex::new(
+                    r#"(?i)aws[_-]?secret[_-]?access[_-]?key\s*=\s*['"]([A-Za-z0-9/+=]{40})['"]"#,
+                )
+                .unwrap(),
+                "AWS Secret Key".to_string(),
+            ),
         ];
 
         let insecure_protocols = vec![
@@ -170,14 +195,27 @@ impl SecurityScanner {
         findings.extend(self.scan_secrets_and_configs(analysis).await?);
 
         // Calculate counts
-        let critical_count = findings.iter().filter(|f| matches!(f.severity, Severity::Critical)).count() as u32;
-        let high_count = findings.iter().filter(|f| matches!(f.severity, Severity::High)).count() as u32;
-        let medium_count = findings.iter().filter(|f| matches!(f.severity, Severity::Medium)).count() as u32;
-        let low_count = findings.iter().filter(|f| matches!(f.severity, Severity::Low)).count() as u32;
+        let critical_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::Critical))
+            .count() as u32;
+        let high_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::High))
+            .count() as u32;
+        let medium_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::Medium))
+            .count() as u32;
+        let low_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::Low))
+            .count() as u32;
 
         // Calculate compliance score
         let _total_issues = critical_count + high_count + medium_count + low_count;
-        let weighted_score = (critical_count * 4 + high_count * 3 + medium_count * 2 + low_count * 1) as f32;
+        let weighted_score =
+            (critical_count * 4 + high_count * 3 + medium_count * 2 + low_count * 1) as f32;
         let max_possible_score = analysis.services.len() as f32 * 10.0; // Arbitrary max score
         let compliance_score = if max_possible_score > 0.0 {
             ((max_possible_score - weighted_score) / max_possible_score * 100.0).max(0.0)
@@ -185,7 +223,9 @@ impl SecurityScanner {
             100.0
         };
 
-        let recommendations = self.generate_security_recommendations(&findings, analysis).await?;
+        let recommendations = self
+            .generate_security_recommendations(&findings, analysis)
+            .await?;
 
         Ok(SecurityFindings {
             critical_count,
@@ -250,22 +290,26 @@ impl SecurityScanner {
             findings.push(SecurityFinding {
                 id: format!("IMG-002-{}", service.name),
                 title: "Non-official image detected".to_string(),
-                description: "Using non-official images may introduce security vulnerabilities.".to_string(),
+                description: "Using non-official images may introduce security vulnerabilities."
+                    .to_string(),
                 severity: Severity::Low,
                 category: SecurityCategory::ImageSecurity,
                 affected_services: vec![service.name.clone()],
-                remediation: "Use official images when possible, or scan custom images for vulnerabilities.".to_string(),
+                remediation:
+                    "Use official images when possible, or scan custom images for vulnerabilities."
+                        .to_string(),
                 cwe_id: None,
-                references: vec![
-                    "https://docs.docker.com/docker-hub/official_images/".to_string(),
-                ],
+                references: vec!["https://docs.docker.com/docker-hub/official_images/".to_string()],
             });
         }
 
         Ok(findings)
     }
 
-    pub fn check_environment_secrets(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
+    pub fn check_environment_secrets(
+        &self,
+        service: &ServiceAnalysis,
+    ) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         for (key, value) in &service.environment {
@@ -275,11 +319,15 @@ impl SecurityScanner {
                     findings.push(SecurityFinding {
                         id: format!("ENV-001-{}-{}", service.name, key),
                         title: format!("Sensitive environment variable: {}", key),
-                        description: "Sensitive information should not be stored in environment variables.".to_string(),
+                        description:
+                            "Sensitive information should not be stored in environment variables."
+                                .to_string(),
                         severity: Severity::High,
                         category: SecurityCategory::SecretManagement,
                         affected_services: vec![service.name.clone()],
-                        remediation: "Use Kubernetes secrets or external secret management systems.".to_string(),
+                        remediation:
+                            "Use Kubernetes secrets or external secret management systems."
+                                .to_string(),
                         cwe_id: Some("CWE-200".to_string()),
                         references: vec![
                             "https://kubernetes.io/docs/concepts/configuration/secret/".to_string(),
@@ -294,11 +342,16 @@ impl SecurityScanner {
                     findings.push(SecurityFinding {
                         id: format!("ENV-002-{}-{}", service.name, key),
                         title: format!("Secret detected in environment variable: {}", key),
-                        description: format!("{} found in environment variable value.", description),
+                        description: format!(
+                            "{} found in environment variable value.",
+                            description
+                        ),
                         severity: Severity::Critical,
                         category: SecurityCategory::SecretManagement,
                         affected_services: vec![service.name.clone()],
-                        remediation: "Move secrets to Kubernetes secret objects or external secret stores.".to_string(),
+                        remediation:
+                            "Move secrets to Kubernetes secret objects or external secret stores."
+                                .to_string(),
                         cwe_id: Some("CWE-200".to_string()),
                         references: vec![
                             "https://kubernetes.io/docs/concepts/configuration/secret/".to_string(),
@@ -365,7 +418,9 @@ impl SecurityScanner {
                 findings.push(SecurityFinding {
                     id: format!("PORT-001-{}-{}", service.name, port.container_port),
                     title: format!("Privileged port exposed: {}", port.container_port),
-                    description: "Exposing privileged ports (< 1024) may require elevated permissions.".to_string(),
+                    description:
+                        "Exposing privileged ports (< 1024) may require elevated permissions."
+                            .to_string(),
                     severity: Severity::Medium,
                     category: SecurityCategory::ConfigurationSecurity,
                     affected_services: vec![service.name.clone()],
@@ -402,13 +457,21 @@ impl SecurityScanner {
             // Check for host path mounts
             if volume.source.starts_with('/') {
                 findings.push(SecurityFinding {
-                    id: format!("VOL-001-{}-{}", service.name, volume.source.replace('/', "-")),
+                    id: format!(
+                        "VOL-001-{}-{}",
+                        service.name,
+                        volume.source.replace('/', "-")
+                    ),
                     title: "Host path volume mount detected".to_string(),
-                    description: format!("Host path {} is mounted, which can pose security risks.", volume.source),
+                    description: format!(
+                        "Host path {} is mounted, which can pose security risks.",
+                        volume.source
+                    ),
                     severity: Severity::Medium,
                     category: SecurityCategory::ContainerSecurity,
                     affected_services: vec![service.name.clone()],
-                    remediation: "Use Kubernetes persistent volumes instead of host path mounts.".to_string(),
+                    remediation: "Use Kubernetes persistent volumes instead of host path mounts."
+                        .to_string(),
                     cwe_id: None,
                     references: vec![
                         "https://kubernetes.io/docs/concepts/storage/volumes/#hostpath".to_string(),
@@ -419,15 +482,26 @@ impl SecurityScanner {
             // Check for sensitive paths
             let sensitive_paths = vec!["/etc", "/var/run/docker.sock", "/proc", "/sys"];
             for sensitive_path in &sensitive_paths {
-                if volume.source.starts_with(sensitive_path) || volume.target.starts_with(sensitive_path) {
+                if volume.source.starts_with(sensitive_path)
+                    || volume.target.starts_with(sensitive_path)
+                {
                     findings.push(SecurityFinding {
-                        id: format!("VOL-002-{}-{}", service.name, volume.source.replace('/', "-")),
+                        id: format!(
+                            "VOL-002-{}-{}",
+                            service.name,
+                            volume.source.replace('/', "-")
+                        ),
                         title: format!("Sensitive path mounted: {}", sensitive_path),
-                        description: format!("Mounting {} can provide access to sensitive system information.", sensitive_path),
+                        description: format!(
+                            "Mounting {} can provide access to sensitive system information.",
+                            sensitive_path
+                        ),
                         severity: Severity::High,
                         category: SecurityCategory::ContainerSecurity,
                         affected_services: vec![service.name.clone()],
-                        remediation: "Avoid mounting sensitive system paths unless absolutely necessary.".to_string(),
+                        remediation:
+                            "Avoid mounting sensitive system paths unless absolutely necessary."
+                                .to_string(),
                         cwe_id: Some("CWE-22".to_string()),
                         references: vec![],
                     });
@@ -437,13 +511,21 @@ impl SecurityScanner {
             // Check for writable mounts
             if !volume.read_only && volume.target.starts_with("/etc") {
                 findings.push(SecurityFinding {
-                    id: format!("VOL-003-{}-{}", service.name, volume.target.replace('/', "-")),
+                    id: format!(
+                        "VOL-003-{}-{}",
+                        service.name,
+                        volume.target.replace('/', "-")
+                    ),
                     title: "Writable mount to sensitive directory".to_string(),
-                    description: format!("Directory {} is mounted as writable, which can be dangerous.", volume.target),
+                    description: format!(
+                        "Directory {} is mounted as writable, which can be dangerous.",
+                        volume.target
+                    ),
                     severity: Severity::Medium,
                     category: SecurityCategory::ContainerSecurity,
                     affected_services: vec![service.name.clone()],
-                    remediation: "Mount sensitive directories as read-only when possible.".to_string(),
+                    remediation: "Mount sensitive directories as read-only when possible."
+                        .to_string(),
                     cwe_id: None,
                     references: vec![],
                 });
@@ -492,10 +574,18 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    fn check_health_check_security(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
+    fn check_health_check_security(
+        &self,
+        service: &ServiceAnalysis,
+    ) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
-        if service.health_check.is_none() && matches!(service.service_type, ServiceType::WebApp | ServiceType::Database) {
+        if service.health_check.is_none()
+            && matches!(
+                service.service_type,
+                ServiceType::WebApp | ServiceType::Database
+            )
+        {
             findings.push(SecurityFinding {
                 id: format!("HC-001-{}", service.name),
                 title: "Missing health checks".to_string(),
@@ -514,7 +604,10 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    async fn scan_volumes(&self, _analysis: &DockerComposeAnalysis) -> Result<Vec<SecurityFinding>> {
+    async fn scan_volumes(
+        &self,
+        _analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<SecurityFinding>> {
         let findings = Vec::new();
 
         // Check for external volumes without proper validation
@@ -524,7 +617,10 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    async fn scan_networks(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<SecurityFinding>> {
+    async fn scan_networks(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         // Check if default network is being used
@@ -538,16 +634,17 @@ impl SecurityScanner {
                 affected_services: analysis.services.iter().map(|s| s.name.clone()).collect(),
                 remediation: "Create custom networks to provide network segmentation.".to_string(),
                 cwe_id: None,
-                references: vec![
-                    "https://docs.docker.com/network/".to_string(),
-                ],
+                references: vec!["https://docs.docker.com/network/".to_string()],
             });
         }
 
         Ok(findings)
     }
 
-    async fn scan_secrets_and_configs(&self, analysis: &DockerComposeAnalysis) -> Result<Vec<SecurityFinding>> {
+    async fn scan_secrets_and_configs(
+        &self,
+        analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         // Check if secrets are defined but not used properly
@@ -572,11 +669,21 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    async fn generate_security_recommendations(&self, findings: &[SecurityFinding], _analysis: &DockerComposeAnalysis) -> Result<Vec<SecurityRecommendation>> {
+    async fn generate_security_recommendations(
+        &self,
+        findings: &[SecurityFinding],
+        _analysis: &DockerComposeAnalysis,
+    ) -> Result<Vec<SecurityRecommendation>> {
         let mut recommendations = Vec::new();
 
-        let critical_count = findings.iter().filter(|f| matches!(f.severity, Severity::Critical)).count();
-        let high_count = findings.iter().filter(|f| matches!(f.severity, Severity::High)).count();
+        let critical_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::Critical))
+            .count();
+        let high_count = findings
+            .iter()
+            .filter(|f| matches!(f.severity, Severity::High))
+            .count();
 
         if critical_count > 0 || high_count > 0 {
             recommendations.push(SecurityRecommendation {
@@ -590,7 +697,9 @@ impl SecurityScanner {
 
         recommendations.push(SecurityRecommendation {
             title: "Enable Network Policies".to_string(),
-            description: "Implement network policies to control traffic between pods and external endpoints.".to_string(),
+            description:
+                "Implement network policies to control traffic between pods and external endpoints."
+                    .to_string(),
             priority: Priority::High,
             implementation_effort: ImplementationEffort::Medium,
             security_impact: SecurityImpact::High,
@@ -598,7 +707,9 @@ impl SecurityScanner {
 
         recommendations.push(SecurityRecommendation {
             title: "Implement Secret Management".to_string(),
-            description: "Use Kubernetes secrets or external secret management systems for sensitive data.".to_string(),
+            description:
+                "Use Kubernetes secrets or external secret management systems for sensitive data."
+                    .to_string(),
             priority: Priority::Critical,
             implementation_effort: ImplementationEffort::Low,
             security_impact: SecurityImpact::High,
@@ -606,7 +717,8 @@ impl SecurityScanner {
 
         recommendations.push(SecurityRecommendation {
             title: "Enable RBAC".to_string(),
-            description: "Implement Role-Based Access Control to limit permissions and access.".to_string(),
+            description: "Implement Role-Based Access Control to limit permissions and access."
+                .to_string(),
             priority: Priority::High,
             implementation_effort: ImplementationEffort::High,
             security_impact: SecurityImpact::High,
@@ -614,7 +726,9 @@ impl SecurityScanner {
 
         recommendations.push(SecurityRecommendation {
             title: "Regular Security Scanning".to_string(),
-            description: "Implement automated security scanning for container images and configurations.".to_string(),
+            description:
+                "Implement automated security scanning for container images and configurations."
+                    .to_string(),
             priority: Priority::Medium,
             implementation_effort: ImplementationEffort::Medium,
             security_impact: SecurityImpact::Medium,
@@ -625,9 +739,29 @@ impl SecurityScanner {
 
     pub fn is_official_image(&self, image: &str) -> bool {
         let official_images = vec![
-            "nginx", "apache", "httpd", "postgres", "mysql", "mariadb", "mongodb", "redis",
-            "memcached", "rabbitmq", "kafka", "elasticsearch", "node", "python", "java",
-            "php", "ruby", "golang", "alpine", "ubuntu", "debian", "centos", "busybox",
+            "nginx",
+            "apache",
+            "httpd",
+            "postgres",
+            "mysql",
+            "mariadb",
+            "mongodb",
+            "redis",
+            "memcached",
+            "rabbitmq",
+            "kafka",
+            "elasticsearch",
+            "node",
+            "python",
+            "java",
+            "php",
+            "ruby",
+            "golang",
+            "alpine",
+            "ubuntu",
+            "debian",
+            "centos",
+            "busybox",
         ];
 
         let image_name = if let Some(index) = image.find(':') {
@@ -636,12 +770,17 @@ impl SecurityScanner {
             image
         };
 
-        official_images.iter().any(|&official| image_name == official)
+        official_images
+            .iter()
+            .any(|&official| image_name == official)
     }
 
     pub fn print_findings_table(&self, findings: &SecurityFindings) -> Result<()> {
         println!("{}", "🔒 Security Scan Results".bold().red());
-        println!("Compliance Score: {:.1}%", findings.compliance_score.to_string().green());
+        println!(
+            "Compliance Score: {:.1}%",
+            findings.compliance_score.to_string().green()
+        );
         println!();
 
         println!("{}", "📊 Finding Summary:".bold().white());
@@ -662,13 +801,17 @@ impl SecurityScanner {
                     Severity::Info => "white",
                 };
 
-                println!("  {} {} ({})",
+                println!(
+                    "  {} {} ({})",
                     "•".blue(),
                     finding.title.bold(),
                     format!("{:?}", finding.severity).color(severity_color)
                 );
                 println!("    {}", finding.description.white());
-                println!("    Services: {}", finding.affected_services.join(", ").cyan());
+                println!(
+                    "    Services: {}",
+                    finding.affected_services.join(", ").cyan()
+                );
                 println!("    Remediation: {}", finding.remediation.dimmed());
                 println!();
             }
@@ -677,7 +820,8 @@ impl SecurityScanner {
         if !findings.recommendations.is_empty() {
             println!("{}", "💡 Security Recommendations:".bold().yellow());
             for (i, rec) in findings.recommendations.iter().enumerate() {
-                println!("{}. {} ({:?} priority, {:?} effort)",
+                println!(
+                    "{}. {} ({:?} priority, {:?} effort)",
                     i + 1,
                     rec.title.white(),
                     rec.priority,
