@@ -86,6 +86,12 @@ pub struct KubernetesConverter {
     handlebars: Handlebars<'static>,
 }
 
+impl Default for KubernetesConverter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KubernetesConverter {
     pub fn new() -> Self {
         let mut handlebars = Handlebars::new();

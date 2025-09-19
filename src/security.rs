@@ -90,9 +90,16 @@ pub struct SecurityScanner {
 struct SecurityPatterns {
     secret_patterns: Vec<(Regex, String)>,
     insecure_protocols: Vec<String>,
+    #[allow(dead_code)]
     dangerous_permissions: Vec<String>,
     default_passwords: Vec<String>,
     sensitive_environment_vars: Vec<String>,
+}
+
+impl Default for SecurityScanner {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SecurityScanner {
@@ -215,7 +222,7 @@ impl SecurityScanner {
         // Calculate compliance score
         let _total_issues = critical_count + high_count + medium_count + low_count;
         let weighted_score =
-            (critical_count * 4 + high_count * 3 + medium_count * 2 + low_count * 1) as f32;
+            (critical_count * 4 + high_count * 3 + medium_count * 2 + low_count) as f32;
         let max_possible_score = analysis.services.len() as f32 * 10.0; // Arbitrary max score
         let compliance_score = if max_possible_score > 0.0 {
             ((max_possible_score - weighted_score) / max_possible_score * 100.0).max(0.0)
@@ -431,7 +438,7 @@ impl SecurityScanner {
             }
 
             // Check for commonly attacked ports
-            let dangerous_ports = vec![22, 23, 25, 53, 135, 139, 445, 3389];
+            let dangerous_ports = [22, 23, 25, 53, 135, 139, 445, 3389];
             if dangerous_ports.contains(&port.container_port) && port.host_port.is_some() {
                 findings.push(SecurityFinding {
                     id: format!("PORT-002-{}-{}", service.name, port.container_port),
@@ -770,9 +777,7 @@ impl SecurityScanner {
             image
         };
 
-        official_images
-            .iter()
-            .any(|&official| image_name == official)
+        official_images.contains(&image_name)
     }
 
     pub fn print_findings_table(&self, findings: &SecurityFindings) -> Result<()> {

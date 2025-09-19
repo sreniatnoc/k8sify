@@ -110,7 +110,14 @@ struct SecretValidator;
 struct PvcValidator;
 struct IngressValidator;
 struct HpaValidator;
+#[allow(dead_code)]
 struct GenericValidator;
+
+impl Default for ManifestValidator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ManifestValidator {
     pub fn new() -> Self {
@@ -360,9 +367,7 @@ impl ManifestValidator {
         let validity_score = (valid_files as f32 / total_files as f32) * 70.0;
         let warning_penalty = (warnings as f32 / total_files as f32) * 10.0;
 
-        (validity_score + 30.0 - warning_penalty)
-            .max(0.0)
-            .min(100.0)
+        (validity_score + 30.0 - warning_penalty).clamp(0.0, 100.0)
     }
 
     fn generate_overall_recommendations(

@@ -116,6 +116,12 @@ pub struct PatternDetector {
     load_balancer_indicators: Vec<String>,
 }
 
+impl Default for PatternDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PatternDetector {
     pub fn new() -> Self {
         Self {
@@ -773,13 +779,12 @@ impl PatternDetector {
     }
 
     fn generate_database_recommendations(&self, service: &ServiceAnalysis) -> Vec<String> {
-        let mut recommendations = Vec::new();
-
-        recommendations
-            .push("Enable persistent storage with appropriate storage class".to_string());
-        recommendations.push("Implement database backup strategy".to_string());
-        recommendations.push("Use Kubernetes secrets for database credentials".to_string());
-        recommendations.push("Apply network policies to restrict database access".to_string());
+        let mut recommendations = vec![
+            "Enable persistent storage with appropriate storage class".to_string(),
+            "Implement database backup strategy".to_string(),
+            "Use Kubernetes secrets for database credentials".to_string(),
+            "Apply network policies to restrict database access".to_string(),
+        ];
 
         if service.resource_limits.memory.is_none() {
             recommendations.push("Set appropriate memory limits for database workload".to_string());

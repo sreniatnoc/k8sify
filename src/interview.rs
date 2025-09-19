@@ -107,6 +107,12 @@ pub struct InteractiveWizard {
     security_scanner: SecurityScanner,
 }
 
+impl Default for InteractiveWizard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InteractiveWizard {
     pub fn new() -> Self {
         Self {

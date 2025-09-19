@@ -146,6 +146,12 @@ pub struct DockerComposeAnalyzer {
     service_type_patterns: HashMap<String, ServiceType>,
 }
 
+impl Default for DockerComposeAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DockerComposeAnalyzer {
     pub fn new() -> Self {
         let mut service_type_patterns = HashMap::new();
@@ -427,7 +433,7 @@ impl DockerComposeAnalyzer {
         if parts.len() >= 2 {
             let source = parts[0].to_string();
             let target = parts[1].to_string();
-            let read_only = parts.get(2).map_or(false, |&opt| opt.contains("ro"));
+            let read_only = parts.get(2).is_some_and(|&opt| opt.contains("ro"));
 
             let mount_type =
                 if source.starts_with('/') || source.starts_with("./") || source.starts_with("../")
