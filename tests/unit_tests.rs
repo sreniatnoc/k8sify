@@ -161,7 +161,7 @@ fn test_microservices_detection() {
         create_test_service("postgres:13", vec![5432], vec![], ServiceType::Database),
         create_test_service("redis:6", vec![6379], vec![], ServiceType::Cache),
     ];
-    
+
     // Add dependencies to simulate microservices architecture
     services[1].depends_on = vec!["postgres".to_string(), "redis".to_string()];
     services[2].depends_on = vec!["postgres".to_string(), "redis".to_string()];
