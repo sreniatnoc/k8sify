@@ -1,7 +1,6 @@
 use anyhow::Result;
 use colored::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::analyzer::{DockerComposeAnalysis, ServiceAnalysis, ServiceType};
 
@@ -316,7 +315,7 @@ impl CostEstimator {
         (cpu, memory, replicas)
     }
 
-    fn parse_cpu_limit(&self, cpu_str: &str) -> Option<f64> {
+    pub fn parse_cpu_limit(&self, cpu_str: &str) -> Option<f64> {
         if cpu_str.ends_with('m') {
             cpu_str.trim_end_matches('m').parse::<f64>().ok().map(|m| m / 1000.0)
         } else {
@@ -324,7 +323,7 @@ impl CostEstimator {
         }
     }
 
-    fn parse_memory_limit(&self, memory_str: &str) -> Option<f64> {
+    pub fn parse_memory_limit(&self, memory_str: &str) -> Option<f64> {
         if memory_str.ends_with("Gi") {
             memory_str.trim_end_matches("Gi").parse::<f64>().ok()
         } else if memory_str.ends_with("Mi") {
@@ -479,7 +478,7 @@ impl CostEstimator {
 
     pub fn print_cost_breakdown(&self, estimate: &CostEstimate) -> Result<()> {
         println!("{}", "💰 Cost Estimation".bold().yellow());
-        println!("Provider: {} ({})", estimate.provider.cyan(), estimate.region.dim());
+        println!("Provider: {} ({})", estimate.provider.cyan(), estimate.region.dimmed());
         println!("Currency: {}", estimate.currency.green());
         println!();
 

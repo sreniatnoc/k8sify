@@ -310,7 +310,7 @@ services:
         fs::write(&compose_file, compose_content).await?;
 
         let k8sify = K8sify::new();
-        let manifests = k8sify.convert_file(&compose_file, None::<&std::path::Path>).await?;
+        let manifests = k8sify.convert_file(&compose_file, None::<&std::path::PathBuf>).await?;
 
         assert_eq!(manifests.deployments.len(), 1);
         assert_eq!(manifests.services.len(), 1);

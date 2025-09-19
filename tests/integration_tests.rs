@@ -259,7 +259,7 @@ services:
 #[test]
 fn test_resource_parsing() {
     // Test CPU parsing
-    let converter = KubernetesConverter::new();
+    let _converter = KubernetesConverter::new();
     // Note: This would require making parse_cpu_limit public or adding a test-specific method
     // For now, we'll test the overall functionality through integration tests
 }

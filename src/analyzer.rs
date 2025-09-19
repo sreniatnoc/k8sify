@@ -74,7 +74,7 @@ pub struct HealthCheck {
     pub start_period: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ServiceType {
     WebApp,
     Database,
@@ -759,7 +759,7 @@ impl DockerComposeAnalyzer {
         Ok(configs)
     }
 
-    fn calculate_complexity_score(&self, services: &[ServiceAnalysis], volumes: &[VolumeAnalysis], networks: &[NetworkAnalysis]) -> u32 {
+    pub fn calculate_complexity_score(&self, services: &[ServiceAnalysis], volumes: &[VolumeAnalysis], networks: &[NetworkAnalysis]) -> u32 {
         let mut score = 0;
 
         score += services.len() as u32 * 10;

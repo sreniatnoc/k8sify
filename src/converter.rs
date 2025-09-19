@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
+use base64::{Engine as _, engine::general_purpose};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
 
@@ -435,9 +435,9 @@ impl KubernetesConverter {
     async fn generate_database_secret(&self, service: &ServiceAnalysis) -> Result<SecretManifest> {
         let data = json!({
             "name": service.name,
-            "username": base64::encode("admin"),
-            "password": base64::encode("changeme"),
-            "database": base64::encode(&service.name)
+            "username": general_purpose::STANDARD.encode("admin"),
+            "password": general_purpose::STANDARD.encode("changeme"),
+            "database": general_purpose::STANDARD.encode(&service.name)
         });
 
         let content = self.handlebars.render("secret", &data)

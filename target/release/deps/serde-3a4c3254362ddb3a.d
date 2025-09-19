@@ -1,0 +1,14 @@
+/Users/shaileshpant/src/sreniatnoc/k8sify/target/release/deps/serde-3a4c3254362ddb3a.d: /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/lib.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/integer128.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/mod.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/de.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/ser.rs /Users/shaileshpant/src/sreniatnoc/k8sify/target/release/build/serde-97c0bea150c02bc4/out/private.rs
+
+/Users/shaileshpant/src/sreniatnoc/k8sify/target/release/deps/libserde-3a4c3254362ddb3a.rlib: /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/lib.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/integer128.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/mod.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/de.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/ser.rs /Users/shaileshpant/src/sreniatnoc/k8sify/target/release/build/serde-97c0bea150c02bc4/out/private.rs
+
+/Users/shaileshpant/src/sreniatnoc/k8sify/target/release/deps/libserde-3a4c3254362ddb3a.rmeta: /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/lib.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/integer128.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/mod.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/de.rs /Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/ser.rs /Users/shaileshpant/src/sreniatnoc/k8sify/target/release/build/serde-97c0bea150c02bc4/out/private.rs
+
+/Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/lib.rs:
+/Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/integer128.rs:
+/Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/mod.rs:
+/Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/de.rs:
+/Users/shaileshpant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.225/src/private/ser.rs:
+/Users/shaileshpant/src/sreniatnoc/k8sify/target/release/build/serde-97c0bea150c02bc4/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/shaileshpant/src/sreniatnoc/k8sify/target/release/build/serde-97c0bea150c02bc4/out

@@ -1,6 +1,5 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::analyzer::{DockerComposeAnalysis, ServiceAnalysis, ServiceType};
 
@@ -359,8 +358,8 @@ impl PatternDetector {
         Ok(patterns)
     }
 
-    fn calculate_web_app_confidence(&self, service: &ServiceAnalysis) -> f32 {
-        let mut confidence = 0.0;
+    pub fn calculate_web_app_confidence(&self, service: &ServiceAnalysis) -> f32 {
+        let mut confidence = 0.0_f32;
 
         // Check image name
         for indicator in &self.web_app_indicators {
@@ -388,11 +387,11 @@ impl PatternDetector {
             confidence += 0.1;
         }
 
-        confidence.min(1.0)
+        confidence.min(1.0_f32)
     }
 
-    fn calculate_database_confidence(&self, service: &ServiceAnalysis) -> f32 {
-        let mut confidence = 0.0;
+    pub fn calculate_database_confidence(&self, service: &ServiceAnalysis) -> f32 {
+        let mut confidence = 0.0_f32;
 
         // Check image name
         for indicator in &self.database_indicators {
@@ -414,11 +413,11 @@ impl PatternDetector {
             confidence += 0.2;
         }
 
-        confidence.min(1.0)
+        confidence.min(1.0_f32)
     }
 
-    fn calculate_cache_confidence(&self, service: &ServiceAnalysis) -> f32 {
-        let mut confidence = 0.0;
+    pub fn calculate_cache_confidence(&self, service: &ServiceAnalysis) -> f32 {
+        let mut confidence = 0.0_f32;
 
         for indicator in &self.cache_indicators {
             if service.image.contains(indicator) {
@@ -431,11 +430,11 @@ impl PatternDetector {
             confidence += 0.4;
         }
 
-        confidence.min(1.0)
+        confidence.min(1.0_f32)
     }
 
     fn calculate_message_queue_confidence(&self, service: &ServiceAnalysis) -> f32 {
-        let mut confidence = 0.0;
+        let mut confidence = 0.0_f32;
 
         for indicator in &self.message_queue_indicators {
             if service.image.contains(indicator) {
@@ -450,11 +449,11 @@ impl PatternDetector {
             confidence += 0.4;
         }
 
-        confidence.min(1.0)
+        confidence.min(1.0_f32)
     }
 
     fn calculate_load_balancer_confidence(&self, service: &ServiceAnalysis) -> f32 {
-        let mut confidence = 0.0;
+        let mut confidence = 0.0_f32;
 
         for indicator in &self.load_balancer_indicators {
             if service.image.contains(indicator) {
@@ -473,10 +472,10 @@ impl PatternDetector {
             confidence += 0.2;
         }
 
-        confidence.min(1.0)
+        confidence.min(1.0_f32)
     }
 
-    fn has_three_tier_architecture(&self, analysis: &DockerComposeAnalysis) -> bool {
+    pub fn has_three_tier_architecture(&self, analysis: &DockerComposeAnalysis) -> bool {
         let has_web = analysis.services.iter().any(|s| matches!(s.service_type, ServiceType::WebApp));
         let has_database = analysis.services.iter().any(|s| matches!(s.service_type, ServiceType::Database));
         let has_business_logic = analysis.services.len() >= 3;
@@ -484,7 +483,7 @@ impl PatternDetector {
         has_web && has_database && has_business_logic
     }
 
-    fn has_microservices_characteristics(&self, analysis: &DockerComposeAnalysis) -> bool {
+    pub fn has_microservices_characteristics(&self, analysis: &DockerComposeAnalysis) -> bool {
         // Multiple services with different responsibilities
         let service_types: std::collections::HashSet<_> = analysis.services
             .iter()

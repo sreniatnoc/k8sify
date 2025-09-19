@@ -3,7 +3,6 @@ use colored::*;
 use dialoguer::{Confirm, Input, MultiSelect, Select};
 use indicatif::{ProgressBar, ProgressStyle};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -31,7 +30,7 @@ pub struct WizardConfiguration {
     pub advanced_features: Vec<AdvancedFeature>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum DeploymentTarget {
     Development,
     Staging,
@@ -581,6 +580,6 @@ impl InteractiveWizard {
             println!();
         }
 
-        println!("{}", "💡 Need help? Check out the documentation or run 'k8sify --help'".dim());
+        println!("{}", "💡 Need help? Check out the documentation or run 'k8sify --help'".dimmed());
     }
 }

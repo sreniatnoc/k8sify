@@ -2,7 +2,6 @@ use anyhow::Result;
 use colored::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::analyzer::{DockerComposeAnalysis, ServiceAnalysis, ServiceType};
 
@@ -177,7 +176,7 @@ impl SecurityScanner {
         let low_count = findings.iter().filter(|f| matches!(f.severity, Severity::Low)).count() as u32;
 
         // Calculate compliance score
-        let total_issues = critical_count + high_count + medium_count + low_count;
+        let _total_issues = critical_count + high_count + medium_count + low_count;
         let weighted_score = (critical_count * 4 + high_count * 3 + medium_count * 2 + low_count * 1) as f32;
         let max_possible_score = analysis.services.len() as f32 * 10.0; // Arbitrary max score
         let compliance_score = if max_possible_score > 0.0 {
@@ -226,7 +225,7 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    fn check_image_security(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
+    pub fn check_image_security(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         // Check for latest tag
@@ -266,7 +265,7 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    fn check_environment_secrets(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
+    pub fn check_environment_secrets(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         for (key, value) in &service.environment {
@@ -357,7 +356,7 @@ impl SecurityScanner {
         Ok(findings)
     }
 
-    fn check_port_security(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
+    pub fn check_port_security(&self, service: &ServiceAnalysis) -> Result<Vec<SecurityFinding>> {
         let mut findings = Vec::new();
 
         for port in &service.ports {
@@ -516,7 +515,7 @@ impl SecurityScanner {
     }
 
     async fn scan_volumes(&self, _analysis: &DockerComposeAnalysis) -> Result<Vec<SecurityFinding>> {
-        let mut findings = Vec::new();
+        let findings = Vec::new();
 
         // Check for external volumes without proper validation
         // This would typically involve checking volume configurations
@@ -624,7 +623,7 @@ impl SecurityScanner {
         Ok(recommendations)
     }
 
-    fn is_official_image(&self, image: &str) -> bool {
+    pub fn is_official_image(&self, image: &str) -> bool {
         let official_images = vec![
             "nginx", "apache", "httpd", "postgres", "mysql", "mariadb", "mongodb", "redis",
             "memcached", "rabbitmq", "kafka", "elasticsearch", "node", "python", "java",
@@ -670,7 +669,7 @@ impl SecurityScanner {
                 );
                 println!("    {}", finding.description.white());
                 println!("    Services: {}", finding.affected_services.join(", ").cyan());
-                println!("    Remediation: {}", finding.remediation.dim());
+                println!("    Remediation: {}", finding.remediation.dimmed());
                 println!();
             }
         }
@@ -684,7 +683,7 @@ impl SecurityScanner {
                     rec.priority,
                     rec.implementation_effort
                 );
-                println!("   {}", rec.description.dim());
+                println!("   {}", rec.description.dimmed());
                 println!();
             }
         }
