@@ -213,7 +213,7 @@ impl ManifestValidator {
         // Parse YAML - handle both single documents and multi-document YAML
         let documents: Vec<Value> = if content.trim().contains("---") {
             serde_yaml::Deserializer::from_str(&content)
-                .map(|de| Value::deserialize(de))
+                .map(Value::deserialize)
                 .collect::<Result<Vec<_>, _>>()
                 .context("Failed to parse multi-document YAML")?
         } else {
